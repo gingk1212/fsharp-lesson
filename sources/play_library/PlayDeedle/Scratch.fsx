@@ -9,3 +9,4 @@ let df = Frame.ReadCsv "../../data/シラバス.csv"
 
 df.RowsDense
 |> Series.filterValues(fun row -> row.GetAs<string>("専門") = "数学")
+|> Frame.ofRows
