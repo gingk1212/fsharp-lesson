@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "TYJURSR9+M9VuqARD1y9cGzBuc8cB7fOowEaoMLSsrIgpeSGWWJucbxAtSZRujUeUGYz9PND1LN3O7Ym4wZnpw==",
+  "success": true,
+  "projectFilePath": "/Users/inagaki/work/202208_fsharp/fsharp-lesson/sources/play_library/PlayArgu/PlayArgu.fsproj",
+  "expectedPackageFiles": [
+    "/Users/inagaki/.nuget/packages/fsharp.core/6.0.5/fsharp.core.6.0.5.nupkg.sha512"
+  ],
+  "logs": []
+}
