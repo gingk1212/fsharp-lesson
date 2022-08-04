@@ -143,3 +143,12 @@ let pProject =
     pstring "project(" >>. pColumnlist .>> pstring ")"
 
 test pProject "project([場所], [学年])"
+
+// 課題12: filterのパーサーを書こう
+let pFilter =
+    let pEqual = spaces >>. pstring "=" .>> spaces
+    let pStr = between (pstring "\"") (pstring "\"")
+                       (manySatisfy (fun c -> c <> '"'))
+    pstring "filter(" >>. pColumn .>> pEqual .>>. pStr .>> pstring ")"
+
+test pFilter "filter([専門] = \"物理\")"
