@@ -154,15 +154,14 @@ test pidentifier "1a1a"
 // test pFilter "filter([専門] = \"物理\")"
 
 // 課題13: pFilterのパーサーの返す型を作ろう
-type Filter = {Column: string; Name: string}
-type FilterExpression = FilterExpression of Filter
+type FilterExpression = {Column: string; Name: string}
 
 let pFilter =
     let pEqual = spaces >>. pstring "=" .>> spaces
     let pStr = between (pstring "\"") (pstring "\"")
                        (manySatisfy (fun c -> c <> '"'))
     pipe2 (pstring "filter(" >>. pColumn) (pEqual >>. pStr .>> pstring ")")
-          (fun c n -> FilterExpression {Column=c; Name=n})
+          (fun c n -> {Column=c; Name=n})
 
 test pFilter "filter([専門] = \"物理\")"
 
@@ -177,10 +176,10 @@ let pProject =
 test pProject "project([場所], [学年])"
 
 type Expression =
-    | P of ProjectExpression
-    | F of FilterExpression
+    | Project of ProjectExpression
+    | Filter of FilterExpression
 
-let pExpression = (pProject |>> P) <|> (pFilter |>> F)
+let pExpression = (pProject |>> Project) <|> (pFilter |>> Filter)
 
 test pExpression "filter([専門] = \"物理\")"
 test pExpression "project([場所], [学年])"
