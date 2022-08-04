@@ -145,10 +145,23 @@ let pProject =
 test pProject "project([場所], [学年])"
 
 // 課題12: filterのパーサーを書こう
+// let pFilter =
+//     let pEqual = spaces >>. pstring "=" .>> spaces
+//     let pStr = between (pstring "\"") (pstring "\"")
+//                        (manySatisfy (fun c -> c <> '"'))
+//     pstring "filter(" >>. pColumn .>> pEqual .>>. pStr .>> pstring ")"
+
+// test pFilter "filter([専門] = \"物理\")"
+
+// 課題13: pFilterのパーサーの返す型を作ろう
+type Filter = {Column: string; Name: string}
+type FilterExpression = FilterExpression of Filter
+
 let pFilter =
     let pEqual = spaces >>. pstring "=" .>> spaces
     let pStr = between (pstring "\"") (pstring "\"")
                        (manySatisfy (fun c -> c <> '"'))
-    pstring "filter(" >>. pColumn .>> pEqual .>>. pStr .>> pstring ")"
+    pipe2 (pstring "filter(" >>. pColumn) (pEqual >>. pStr .>> pstring ")")
+          (fun c n -> FilterExpression {Column=c; Name=n})
 
 test pFilter "filter([専門] = \"物理\")"
