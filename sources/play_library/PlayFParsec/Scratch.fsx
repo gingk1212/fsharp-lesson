@@ -135,3 +135,11 @@ let pidentifier =
 
 test pidentifier "a1a1"
 test pidentifier "1a1a"
+
+// 課題11: projectのパーサーを書こう
+let pProject =
+    let pComma = spaces >>. pstring "," .>> spaces
+    let pColumnlist = sepBy pColumn pComma
+    pstring "project(" >>. pColumnlist .>> pstring ")"
+
+test pProject "project([場所], [学年])"
