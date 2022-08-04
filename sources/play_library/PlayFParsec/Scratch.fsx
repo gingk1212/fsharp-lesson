@@ -121,3 +121,10 @@ let stringLiteral3 =
             (stringsSepBy normalCharSnippet escapedChar)
 
 test stringLiteral3 "\"abc\""
+
+// 課題10: カラム名のパーサーを書こう
+let pColumn =
+    between (pstring "[") (pstring "]")
+            (manySatisfy (fun c -> c <> '[' && c <> ']'))
+
+test pColumn "[場所]"
