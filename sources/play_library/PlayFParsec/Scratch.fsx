@@ -137,12 +137,12 @@ test pidentifier "a1a1"
 test pidentifier "1a1a"
 
 // 課題11: projectのパーサーを書こう
-let pProject =
-    let pComma = spaces >>. pstring "," .>> spaces
-    let pColumnlist = sepBy pColumn pComma
-    pstring "project(" >>. pColumnlist .>> pstring ")"
+// let pProject =
+//     let pComma = spaces >>. pstring "," .>> spaces
+//     let pColumnlist = sepBy pColumn pComma
+//     pstring "project(" >>. pColumnlist .>> pstring ")"
 
-test pProject "project([場所], [学年])"
+// test pProject "project([場所], [学年])"
 
 // 課題12: filterのパーサーを書こう
 // let pFilter =
@@ -165,3 +165,22 @@ let pFilter =
           (fun c n -> FilterExpression {Column=c; Name=n})
 
 test pFilter "filter([専門] = \"物理\")"
+
+// 課題14: pProjectも型を作って返すようにし、projectとfilterの両方をパースするpExpressionを作る
+type ProjectExpression = ProjectExpression of string list
+
+let pProject =
+    let pComma = spaces >>. pstring "," .>> spaces
+    let pColumnlist = sepBy pColumn pComma
+    (pstring "project(" >>. pColumnlist .>> pstring ")") |>> ProjectExpression
+
+test pProject "project([場所], [学年])"
+
+type Expression =
+    | P of ProjectExpression
+    | F of FilterExpression
+
+let pExpression = (pProject |>> P) <|> (pFilter |>> F)
+
+test pExpression "filter([専門] = \"物理\")"
+test pExpression "project([場所], [学年])"
