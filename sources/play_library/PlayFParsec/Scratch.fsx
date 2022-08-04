@@ -128,3 +128,10 @@ let pColumn =
             (manySatisfy (fun c -> c <> '[' && c <> ']'))
 
 test pColumn "[場所]"
+
+// 課題 10.1 pidentifierを書け
+let pidentifier =
+    many1Satisfy2 (fun c -> isLetter c) (fun c -> isLetter c || isDigit c)
+
+test pidentifier "a1a1"
+test pidentifier "1a1a"
