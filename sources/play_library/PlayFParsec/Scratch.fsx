@@ -183,3 +183,35 @@ let pExpression = (pProject |>> Project) <|> (pFilter |>> Filter)
 
 test pExpression "filter([専門] = \"物理\")"
 test pExpression "project([場所], [学年])"
+
+// 課題15: 両者のパースをくっつけて課題5のPlayDeedleとくっつけよう
+#r "nuget:Deedle"
+
+open Deedle
+open FParsec
+
+#load "Deedle.fsx"
+
+let df = Frame.ReadCsv "../../data/シラバス.csv"
+
+let filter (filterExp: FilterExpression) (frame: Frame<int, string>) =
+    frame.RowsDense
+    |> Series.filterValues (fun row -> row.GetAs<string>(filterExp.Column) = filterExp.Name)
+    |> Frame.ofRows
+
+let project (projectExp: ProjectExpression) (frame: Frame<int, string>) =
+    match projectExp with
+    | ProjectExpression p -> frame.Columns.[p]
+
+let runExpr str frame =
+    match run pExpression str with
+    | Success(result, _, _) ->
+        match result with
+        | Project p -> Some(project p frame)
+        | Filter f -> Some(filter f frame)
+    | Failure(errorMsg, _, _) ->
+        printfn "Failure: %s" errorMsg
+        None
+
+runExpr "project([場所], [学年])" df
+runExpr "filter([専門] = \"数学\")" df
