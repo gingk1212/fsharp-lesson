@@ -188,7 +188,6 @@ test pExpression "project([場所], [学年])"
 #r "nuget:Deedle"
 
 open Deedle
-open FParsec
 
 #load "Deedle.fsx"
 
@@ -199,13 +198,12 @@ let filter (filterExp: FilterExpression) (frame: Frame<int, string>) =
     |> Series.filterValues (fun row -> row.GetAs<string>(filterExp.Column) = filterExp.Name)
     |> Frame.ofRows
 
-let project (projectExp: ProjectExpression) (frame: Frame<int, string>) =
-    match projectExp with
-    | ProjectExpression p -> frame.Columns.[p]
+let project (ProjectExpression p) (frame: Frame<int, string>) =
+    frame.Columns.[p]
 
 let runExpr str frame =
     match run pExpression str with
-    | Success(result, _, _) ->
+    | ParserResult.Success(result, _, _) ->
         match result with
         | Project p -> Some(project p frame)
         | Filter f -> Some(filter f frame)
