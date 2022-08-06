@@ -1,11 +1,15 @@
 #r "nuget: FParsec"
+#r "nuget: Deedle"
 
 open System.Text.RegularExpressions
 open FParsec
+open Deedle
+
+#load "Deedle.fsx"
 
 let test p str =
     match run p str with
-    | Success(result, _, _) -> printfn "Success: %A" result
+    | ParserResult.Success(result, _, _) -> printfn "Success: %A" result
     | Failure(errorMsg, _, _) -> printfn "Failure: %s" errorMsg
 
 let firstIdentifier = "([_@a-zA-Z]|\p{IsHiragana}|\p{IsKatakana}|\p{IsCJKUnifiedIdeographs})"
@@ -53,7 +57,8 @@ test pColumnList "" // error
 
 type Expression =
     | Identifier of string
-    | ProjectExpression of Expression * string list
+    | ProjectExpression of ProjectExpression
+and ProjectExpression = Expression * string list
 
 let pExpression, pExpressionRef = createParserForwardedToRef()
 let pProjectExpression = pstring "project" >>. spaces >>. pExpression .>>. (spaces >>. pColumnList)
@@ -63,3 +68,23 @@ test pProjectExpression "project (シラバス) 専門, 学年, [あ い]]"
 test pProjectExpression "project (project (シラバス) 専門, 学年, 場所) 専門, 学年" // 文字化けでerror?
 test pProjectExpression "project (project (aa) bb, cc, dd) bb, cc"
 test pProjectExpression "project (aa) [bb]]]]]]" // エラーになってほしい
+
+let rec evalExpression expression =
+    match expression with
+    | Identifier id -> Frame.ReadCsv ("database/master/" + id + ".csv")
+    | ProjectExpression pe -> evalProjectExpression pe
+and evalProjectExpression projExp =
+    let (expression, columnList) = projExp
+    let df = evalExpression expression
+    df.Columns.[columnList]
+
+let testProjectExpression str =
+    match run pProjectExpression str with
+        | ParserResult.Success(result, _, _) ->
+            let df = evalProjectExpression result
+            df.Print()
+        | Failure(errorMsg, _, _) ->
+            printfn "Failure: %s" errorMsg
+
+testProjectExpression "project (Employee) Name, DeptName]"
+testProjectExpression "project (project (Employee) Name, EmpId, DeptName) Name, EmpId"
