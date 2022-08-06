@@ -88,3 +88,9 @@ let testProjectExpression str =
 
 testProjectExpression "project (Employee) Name, DeptName]"
 testProjectExpression "project (project (Employee) Name, EmpId, DeptName) Name, EmpId"
+
+let distinct (df: Frame<int, string>) =
+    df.RowsDense.Values |> Seq.distinct |> Series.ofValues |> Frame.ofRows
+
+let df = Frame.ReadCsv "../data/シラバス.csv"
+df.Columns[ ["専門"; "学年"] ] |> distinct
