@@ -31,43 +31,33 @@ Regex.Match("(abc)", firstIdentifier + identifier)
 Regex.Match("abc+def", firstIdentifier + identifier)
 Regex.Match("-abc", firstIdentifier + identifier)
 
-type Identifier = Identifier of string
-let pIdentifier = regex (firstIdentifier + identifier) |>> Identifier
+let pIdentifier = regex (firstIdentifier + identifier)
 test pIdentifier "@aaa"
 test pIdentifier "" // error
 
-type SBracketColumn = SBracketColumn of string
 let notSBrackets s = s <> '[' && s <> ']'
-let pSBracketColumn = pstring "[" >>. many1Satisfy notSBrackets .>> pstring "]" |>> SBracketColumn
+let pSBracketColumn = pstring "[" >>. many1Satisfy notSBrackets .>> pstring "]"
 
-type Column =
-    | Identifier of Identifier
-    | SBracketColumn of SBracketColumn
-let pColumn = (pIdentifier |>> Identifier)
-              <|> (pSBracketColumn |>> SBracketColumn)
+let pColumn = pIdentifier <|> pSBracketColumn
 test pColumn "[aaa]"
 test pColumn "@a-aa"
 test pColumn "123" // error
 test pColumn "" // error
 test pColumn "[]" // error
 
-type ColumnList = ColumnList of Column list
 let pComma = spaces >>. pstring "," .>> spaces
-let pColumnList = sepBy1 pColumn pComma |>> ColumnList
+let pColumnList = sepBy1 pColumn pComma
 test pColumnList "aa, @aa , [a a/], a"
 test pColumnList " a, a" // error
 test pColumnList "" // error
 
 type Expression =
-    | Identifier of Identifier
-    | ProjectExpression of ProjectExpression
-and ProjectExpression = ProjectExpression of Expression * ColumnList
+    | Identifier of string
+    | ProjectExpression of Expression * string list
 
 let pExpression, pExpressionRef = createParserForwardedToRef()
-let pProjectExpression = pstring "project" >>. spaces >>. pExpression .>>. (spaces >>. pColumnList) |>> ProjectExpression
-// pExpressionRef.Value <- (attempt (pstring "(" >>. pProjectExpression .>> pstring ")" |>> Expression.ProjectExpression))
-//                         <|> (pstring "(" >>. pIdentifier .>> pstring ")" |>> Identifier)
-pExpressionRef.Value <- pstring "(" >>. ((pProjectExpression |>> Expression.ProjectExpression) <|> (pIdentifier |>> Identifier)) .>> pstring ")"
+let pProjectExpression = pstring "project" >>. spaces >>. pExpression .>>. (spaces >>. pColumnList)
+pExpressionRef.Value <- pstring "(" >>. ((pProjectExpression |>> ProjectExpression) <|> (pIdentifier |>> Identifier)) .>> pstring ")"
 
 test pProjectExpression "project (シラバス) 専門, 学年, [あ い]]"
 test pProjectExpression "project (project (シラバス) 専門, 学年, 場所) 専門, 学年" // 文字化けでerror?
