@@ -59,15 +59,15 @@ test pColumnList " a, a" // error
 test pColumnList "" // error
 
 type Expression =
-    | Ident of Identifier
-    | ProjExp of ProjectExpression
+    | Identifier of Identifier
+    | ProjectExpression of ProjectExpression
 and ProjectExpression = ProjectExpression of Expression * ColumnList
 
 let pExpression, pExpressionRef = createParserForwardedToRef()
 let pProjectExpression = pstring "project" >>. spaces >>. pExpression .>>. (spaces >>. pColumnList) |>> ProjectExpression
-// pExpressionRef.Value <- (pstring "(" >>. pProjectExpression .>> pstring ")" |>> ProjExp)
-//                         <|> (pstring "(" >>. pIdentifier .>> pstring ")" |>> Ident)
-pExpressionRef.Value <- pstring "(" >>. ((pProjectExpression |>> ProjExp) <|> (pIdentifier |>> Ident)) .>> pstring ")"
+// pExpressionRef.Value <- (attempt (pstring "(" >>. pProjectExpression .>> pstring ")" |>> Expression.ProjectExpression))
+//                         <|> (pstring "(" >>. pIdentifier .>> pstring ")" |>> Identifier)
+pExpressionRef.Value <- pstring "(" >>. ((pProjectExpression |>> Expression.ProjectExpression) <|> (pIdentifier |>> Identifier)) .>> pstring ")"
 
 test pProjectExpression "project (シラバス) 専門, 学年, [あ い]]"
 test pProjectExpression "project (project (シラバス) 専門, 学年, 場所) 専門, 学年" // 文字化けでerror?
