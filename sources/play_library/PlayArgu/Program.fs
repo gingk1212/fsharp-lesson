@@ -1,4 +1,6 @@
-﻿open Argu
+﻿// 課題8: PlayDeedleのprojectとfilterをArguでコマンドライン化
+
+open Argu
 open Deedle
 
 type Arguments =
