@@ -12,7 +12,7 @@ type Relation = Relation of Frame<int, string>
 let distinct (df: Frame<int, string>) =
     df.RowsDense.Values |> Seq.distinct |> Series.ofValues |> Frame.ofRows |> Relation
 
-let roadCsvWithDistinct csv =
+let loadCsvWithDistinct csv =
     Frame.ReadCsv csv |> distinct
 
 let firstIdentifier = "([_@a-zA-Z]|\p{IsHiragana}|\p{IsKatakana}|\p{IsCJKUnifiedIdeographs})"
@@ -36,7 +36,7 @@ pExpressionRef.Value <- pstring "(" >>. ((pProjectExpression |>> ProjectExpressi
 
 let rec evalExpression expression =
     match expression with
-    | Identifier id -> roadCsvWithDistinct ("database/master/" + id + ".csv")
+    | Identifier id -> loadCsvWithDistinct ("database/master/" + id + ".csv")
     | ProjectExpression pe -> evalProjectExpression pe
 and evalProjectExpression projExp =
     let (expression, columnList) = projExp
