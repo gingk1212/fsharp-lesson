@@ -6,14 +6,15 @@ open Deedle
 
 #load "Deedle.fsx"
 
-// 課題3: Relationの型をつくれ
-type Relation = Relation of Frame<int, string>
+// 課題4: module Relationを作りADTしよう
+module Relation =
+    type T = Relation of Frame<int, string>
 
-let distinct (df: Frame<int, string>) =
-    df.RowsDense.Values |> Seq.distinct |> Series.ofValues |> Frame.ofRows |> Relation
+    let fromFrame (df: Frame<int, string>) =
+        df.RowsDense.Values |> Seq.distinct |> Series.ofValues |> Frame.ofRows |> Relation
 
-let loadCsvWithDistinct csv =
-    Frame.ReadCsv csv |> distinct
+    let fromCsv csv =
+        Frame.ReadCsv csv |> fromFrame
 
 let firstIdentifier = "([_@a-zA-Z]|\p{IsHiragana}|\p{IsKatakana}|\p{IsCJKUnifiedIdeographs})"
 let identifier = "([-_@a-zA-Z0-9]|\p{IsHiragana}|\p{IsKatakana}|\p{IsCJKUnifiedIdeographs})*"
@@ -36,17 +37,17 @@ pExpressionRef.Value <- pstring "(" >>. ((pProjectExpression |>> ProjectExpressi
 
 let rec evalExpression expression =
     match expression with
-    | Identifier id -> loadCsvWithDistinct ("database/master/" + id + ".csv")
+    | Identifier id -> Relation.fromCsv ("database/master/" + id + ".csv")
     | ProjectExpression pe -> evalProjectExpression pe
 and evalProjectExpression projExp =
     let (expression, columnList) = projExp
-    let (Relation df) = evalExpression expression
-    df.Columns.[columnList] |> distinct
+    let (Relation.T.Relation df) = evalExpression expression
+    df.Columns.[columnList] |> Relation.fromFrame
 
 let testProjectExpression str =
     match run pProjectExpression str with
         | ParserResult.Success(result, _, _) ->
-            let (Relation df) = evalProjectExpression result
+            let (Relation.T.Relation df) = evalProjectExpression result
             df.Print()
         | Failure(errorMsg, _, _) ->
             printfn "Failure: %s" errorMsg
