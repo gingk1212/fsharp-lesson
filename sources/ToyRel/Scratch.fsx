@@ -13,8 +13,15 @@ module Relation =
     let fromFrame (df: Frame<int, string>) =
         df.RowsDense.Values |> Seq.distinct |> Series.ofValues |> Frame.ofRows |> Relation
 
-    let fromCsv csv =
+    let loadRelation name =
+        let csv = "database/master/" + name + ".csv"
         Frame.ReadCsv csv |> fromFrame
+
+    let project (Relation df) (columnList: string list) =
+        df.Columns.[columnList] |> Relation
+
+    let print (Relation df) =
+        df.Print()
 
 let firstIdentifier = "([_@a-zA-Z]|\p{IsHiragana}|\p{IsKatakana}|\p{IsCJKUnifiedIdeographs})"
 let identifier = "([-_@a-zA-Z0-9]|\p{IsHiragana}|\p{IsKatakana}|\p{IsCJKUnifiedIdeographs})*"
@@ -37,18 +44,18 @@ pExpressionRef.Value <- pstring "(" >>. ((pProjectExpression |>> ProjectExpressi
 
 let rec evalExpression expression =
     match expression with
-    | Identifier id -> Relation.fromCsv ("database/master/" + id + ".csv")
+    | Identifier id -> Relation.loadRelation id
     | ProjectExpression pe -> evalProjectExpression pe
 and evalProjectExpression projExp =
     let (expression, columnList) = projExp
-    let (Relation.T.Relation df) = evalExpression expression
-    df.Columns.[columnList] |> Relation.fromFrame
+    let relation = evalExpression expression
+    Relation.project relation columnList
 
 let testProjectExpression str =
     match run pProjectExpression str with
         | ParserResult.Success(result, _, _) ->
-            let (Relation.T.Relation df) = evalProjectExpression result
-            df.Print()
+            let relation = evalProjectExpression result
+            Relation.print relation
         | Failure(errorMsg, _, _) ->
             printfn "Failure: %s" errorMsg
 
