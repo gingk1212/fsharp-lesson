@@ -7,6 +7,9 @@ open Deedle
 #load "Deedle.fsx"
 
 // 課題4: module Relationを作りADTしよう
+// 課題5: まずは指定されたファイル名で保存する関数を作る
+let databaseDir = "database/master/"
+
 module Relation =
     type T = Relation of Frame<int, string>
 
@@ -14,7 +17,7 @@ module Relation =
         df.RowsDense.Values |> Seq.distinct |> Series.ofValues |> Frame.ofRows |> Relation
 
     let loadRelation name =
-        let csv = "database/master/" + name + ".csv"
+        let csv = databaseDir + name + ".csv"
         Frame.ReadCsv csv |> fromFrame
 
     let project (Relation df) (columnList: string list) =
@@ -22,6 +25,9 @@ module Relation =
 
     let print (Relation df) =
         df.Print()
+
+    let save (Relation df) name =
+        df.SaveCsv (databaseDir + name + ".csv")
 
 let firstIdentifier = "([_@a-zA-Z]|\p{IsHiragana}|\p{IsKatakana}|\p{IsCJKUnifiedIdeographs})"
 let identifier = "([-_@a-zA-Z0-9]|\p{IsHiragana}|\p{IsKatakana}|\p{IsCJKUnifiedIdeographs})*"
@@ -56,6 +62,7 @@ let testProjectExpression str =
         | ParserResult.Success(result, _, _) ->
             let relation = evalProjectExpression result
             Relation.print relation
+            Relation.save relation "test"
         | Failure(errorMsg, _, _) ->
             printfn "Failure: %s" errorMsg
 
