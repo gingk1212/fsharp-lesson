@@ -82,4 +82,11 @@ let createBaseName () =
         Array.set randChars i randChar
     prefix + System.String randChars
 
+let createBaseName2 () =
+    let prefix = "zz"
+    let randChar _ = char (rand.Next( (int 'a'), (int 'z')+1 ))
+    let randStr = Seq.init 4 randChar |> String.Concat
+    prefix + randStr
+
 createBaseName()
+createBaseName2()
