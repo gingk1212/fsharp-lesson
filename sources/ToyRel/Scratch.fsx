@@ -68,3 +68,18 @@ let testProjectExpression str =
 
 testProjectExpression "project (Employee) Name, DeptName]"
 testProjectExpression "project (project (Employee) Name, EmpId, DeptName) Name, EmpId"
+
+// 課題6: ランダムのファイル名を生成しよう
+open System
+
+let rand = Random()
+
+let createBaseName () =
+    let prefix = "zz"
+    let randChars = Array.zeroCreate 4
+    for i in 0 .. randChars.Length - 1 do
+        let randChar = char (rand.Next( (int 'a'), (int 'z')+1))
+        Array.set randChars i randChar
+    prefix + System.String randChars
+
+createBaseName()
