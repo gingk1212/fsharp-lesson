@@ -20,13 +20,13 @@ module Relation =
         let csv = databaseDir + name + ".csv"
         Frame.ReadCsv csv |> fromFrame
 
-    let project (Relation df) (columnList: string list) =
+    let project (columnList: string list) (Relation df) =
         df.Columns.[columnList] |> Relation
 
     let print (Relation df) =
         df.Print()
 
-    let save (Relation df) name =
+    let save name (Relation df) =
         df.SaveCsv (databaseDir + name + ".csv")
 
 let firstIdentifier = "([_@a-zA-Z]|\p{IsHiragana}|\p{IsKatakana}|\p{IsCJKUnifiedIdeographs})"
@@ -55,14 +55,14 @@ let rec evalExpression expression =
 and evalProjectExpression projExp =
     let (expression, columnList) = projExp
     let relation = evalExpression expression
-    Relation.project relation columnList
+    Relation.project columnList relation
 
 let testProjectExpression str =
     match run pProjectExpression str with
         | ParserResult.Success(result, _, _) ->
             let relation = evalProjectExpression result
             Relation.print relation
-            Relation.save relation "test"
+            Relation.save "test" relation
         | Failure(errorMsg, _, _) ->
             printfn "Failure: %s" errorMsg
 
