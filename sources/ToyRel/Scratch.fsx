@@ -42,21 +42,31 @@ let pColumnList = sepBy1 pColumn pComma
 type Expression =
     | Identifier of string
     | ProjectExpression of ProjectExpression
-and ProjectExpression = Expression * string list
+and ProjectExpression =
+    { Expression: Expression 
+      ColumnList: string list }
 
 let pExpression, pExpressionRef = createParserForwardedToRef()
-let pProjectExpression = pstring "project" >>. spaces >>. pExpression .>>. (spaces >>. pColumnList)
-pExpressionRef.Value <- pstring "("
-                        >>. ((pProjectExpression |>> ProjectExpression) <|> (pIdentifier |>> Identifier))
-                        .>> pstring ")"
+
+let pProjectExpression =
+    pipe2 (pstring "project" >>. spaces >>. pstring "(" >>. pExpression .>> pstring ")" .>> spaces)
+          pColumnList
+          (fun e c -> { Expression = e; ColumnList = c })
+
+pExpressionRef.Value <-
+    (pProjectExpression |>> ProjectExpression)
+    <|> (pIdentifier |>> Identifier)
 
 let pPrintStmt = pstring "print" >>. spaces >>. pIdentifier
 
-let pAssignStmt = (pIdentifier .>> (spaces .>> pstring "=" .>> spaces))
-                  .>>. ((pstring "(" >>. (pIdentifier |>> Identifier) .>> pstring ")")
-                        <|> (pProjectExpression |>> ProjectExpression))
+type AssignStmt =
+    { Rname: string
+      Expression: Expression }
 
-type AssignStmt = string * Expression
+let pAssignStmt = 
+    pipe2 (pIdentifier .>> spaces .>> pstring "=" .>> spaces)
+          (pstring "(" >>. pIdentifier |>> Identifier .>> pstring ")" <|> pExpression)
+          (fun r e -> { Rname = r; Expression = e })
 
 type Command =
     | ProjectExpression of ProjectExpression
@@ -72,18 +82,18 @@ let rec evalExpression expression =
     match expression with
     | Identifier id -> Relation.loadRelation id
     | Expression.ProjectExpression pe -> evalProjectExpression pe
+
 and evalProjectExpression projExp =
-    let (expression, columnList) = projExp
-    let relation = evalExpression expression
-    Relation.project columnList relation
+    let relation = evalExpression projExp.Expression
+    Relation.project projExp.ColumnList relation
 
 let evalPrintStmt printStmt =
     let relation = Relation.loadRelation printStmt
     Relation.print relation
 
-let evalAssignStmt (basename, expression) =
-    let relation = evalExpression expression
-    Relation.save basename relation
+let evalAssignStmt assignStmt =
+    let relation = evalExpression assignStmt.Expression
+    Relation.save assignStmt.Rname relation
 
 // execute command
 let rand = Random()
@@ -116,3 +126,4 @@ execute "project (project (Employee) Name, EmpId, DeptName) Name, EmpId"
 execute "print シラバス"
 execute "hoge = (シラバス)"
 execute "fuga = project (Employee) Name, DeptName"
+execute "foo = シラバス" // should be an error
