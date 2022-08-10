@@ -3,11 +3,10 @@
 
 open FParsec
 open Deedle
+open System
 
 #load "Deedle.fsx"
 
-// 課題4: module Relationを作りADTしよう
-// 課題5: まずは指定されたファイル名で保存する関数を作る
 let databaseDir = "database/master/"
 
 module Relation =
@@ -29,6 +28,7 @@ module Relation =
     let save name (Relation df) =
         df.SaveCsv (databaseDir + name + ".csv")
 
+// parser
 let firstIdentifier = "([_@a-zA-Z]|\p{IsHiragana}|\p{IsKatakana}|\p{IsCJKUnifiedIdeographs})"
 let identifier = "([-_@a-zA-Z0-9]|\p{IsHiragana}|\p{IsKatakana}|\p{IsCJKUnifiedIdeographs})*"
 
@@ -46,47 +46,57 @@ and ProjectExpression = Expression * string list
 
 let pExpression, pExpressionRef = createParserForwardedToRef()
 let pProjectExpression = pstring "project" >>. spaces >>. pExpression .>>. (spaces >>. pColumnList)
-pExpressionRef.Value <- pstring "(" >>. ((pProjectExpression |>> ProjectExpression) <|> (pIdentifier |>> Identifier)) .>> pstring ")"
+pExpressionRef.Value <- pstring "("
+                        >>. ((pProjectExpression |>> ProjectExpression) <|> (pIdentifier |>> Identifier))
+                        .>> pstring ")"
 
+let pPrintStmt = pstring "print" >>. spaces >>. pIdentifier
+
+type Command =
+    | ProjectExpression of ProjectExpression
+    | PrintStmt of string
+
+let pCommand = (pProjectExpression |>> ProjectExpression)
+               <|> (pPrintStmt |>> PrintStmt)
+
+// evaluator
 let rec evalExpression expression =
     match expression with
     | Identifier id -> Relation.loadRelation id
-    | ProjectExpression pe -> evalProjectExpression pe
+    | Expression.ProjectExpression pe -> evalProjectExpression pe
 and evalProjectExpression projExp =
     let (expression, columnList) = projExp
     let relation = evalExpression expression
     Relation.project columnList relation
 
-let testProjectExpression str =
-    match run pProjectExpression str with
-        | ParserResult.Success(result, _, _) ->
-            let relation = evalProjectExpression result
-            Relation.print relation
-            Relation.save "test" relation
-        | Failure(errorMsg, _, _) ->
-            printfn "Failure: %s" errorMsg
+let evalPrintStmt printStmt =
+    let relation = Relation.loadRelation printStmt
+    Relation.print relation
 
-testProjectExpression "project (Employee) Name, DeptName]"
-testProjectExpression "project (project (Employee) Name, EmpId, DeptName) Name, EmpId"
-
-// 課題6: ランダムのファイル名を生成しよう
-open System
-
+// execute command
 let rand = Random()
 
 let createBaseName () =
-    let prefix = "zz"
-    let randChars = Array.zeroCreate 4
-    for i in 0 .. randChars.Length - 1 do
-        let randChar = char (rand.Next( (int 'a'), (int 'z')+1))
-        Array.set randChars i randChar
-    prefix + System.String randChars
-
-let createBaseName2 () =
     let prefix = "zz"
     let randChar _ = char (rand.Next( (int 'a'), (int 'z')+1 ))
     let randStr = Seq.init 4 randChar |> String.Concat
     prefix + randStr
 
-createBaseName()
-createBaseName2()
+let saveWithRandomName relation =
+    Relation.save (createBaseName()) relation
+
+let execute command =
+    match run pCommand command with
+    | ParserResult.Success(result, _, _) ->
+        match result with
+        | ProjectExpression projExp ->
+            let relation = evalProjectExpression projExp
+            saveWithRandomName relation
+        | PrintStmt printStmt ->
+            evalPrintStmt printStmt
+    | Failure(errorMsg, _, _) ->
+        printfn "Failure: %s" errorMsg
+
+execute "project (Employee) Name, DeptName]"
+execute "project (project (Employee) Name, EmpId, DeptName) Name, EmpId"
+execute "print シラバス"
