@@ -52,12 +52,20 @@ pExpressionRef.Value <- pstring "("
 
 let pPrintStmt = pstring "print" >>. spaces >>. pIdentifier
 
+let pAssignStmt = (pIdentifier .>> (spaces .>> pstring "=" .>> spaces))
+                  .>>. ((pstring "(" >>. (pIdentifier |>> Identifier) .>> pstring ")")
+                        <|> (pProjectExpression |>> ProjectExpression))
+
+type AssignStmt = string * Expression
+
 type Command =
     | ProjectExpression of ProjectExpression
     | PrintStmt of string
+    | AssignStmt of AssignStmt
 
 let pCommand = (pProjectExpression |>> ProjectExpression)
                <|> (pPrintStmt |>> PrintStmt)
+               <|> (pAssignStmt |>> AssignStmt)
 
 // evaluator
 let rec evalExpression expression =
@@ -72,6 +80,10 @@ and evalProjectExpression projExp =
 let evalPrintStmt printStmt =
     let relation = Relation.loadRelation printStmt
     Relation.print relation
+
+let evalAssignStmt (basename, expression) =
+    let relation = evalExpression expression
+    Relation.save basename relation
 
 // execute command
 let rand = Random()
@@ -94,9 +106,13 @@ let execute command =
             saveWithRandomName relation
         | PrintStmt printStmt ->
             evalPrintStmt printStmt
+        | AssignStmt assignStmt ->
+            evalAssignStmt assignStmt
     | Failure(errorMsg, _, _) ->
         printfn "Failure: %s" errorMsg
 
 execute "project (Employee) Name, DeptName]"
 execute "project (project (Employee) Name, EmpId, DeptName) Name, EmpId"
 execute "print シラバス"
+execute "hoge = (シラバス)"
+execute "fuga = project (Employee) Name, DeptName"
