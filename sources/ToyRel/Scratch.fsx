@@ -65,7 +65,9 @@ type AssignStmt =
 
 let pAssignStmt = 
     pipe2 (pIdentifier .>> spaces .>> pstring "=" .>> spaces)
-          (pstring "(" >>. pIdentifier |>> Identifier .>> pstring ")" <|> pExpression)
+          ((pstring "(" >>. pIdentifier |>> Identifier .>> pstring ")")
+           <|> (attempt(pIdentifier .>> eof) >>. pzero)
+           <|> pExpression)
           (fun r e -> { Rname = r; Expression = e })
 
 type Command =
