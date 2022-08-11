@@ -4,6 +4,7 @@
 open FParsec
 open Deedle
 open System
+open System.IO
 
 #load "Deedle.fsx"
 
@@ -59,6 +60,8 @@ pExpressionRef.Value <-
     (pProjectExpression |>> ProjectExpression)
     <|> (pstring "(" >>. pIdentifier .>> pstring ")" |>> Identifier)
 
+let pListStmt = pstring "list"
+
 let pPrintStmt = pstring "print" >>. spaces >>. pIdentifier
 
 type AssignStmt =
@@ -71,10 +74,12 @@ let pAssignStmt =
 
 type Command =
     | ProjectExpression of ProjectExpression
+    | ListStmt of string
     | PrintStmt of string
     | AssignStmt of AssignStmt
 
 let pCommand = (pProjectExpression |>> ProjectExpression)
+               <|> (pListStmt |>> ListStmt)
                <|> (pPrintStmt |>> PrintStmt)
                <|> (pAssignStmt |>> AssignStmt)
 
@@ -87,6 +92,10 @@ let rec evalExpression expression =
 and evalProjectExpression projExp =
     let relation = evalExpression projExp.Expression
     Relation.project projExp.ColumnList relation
+
+let evalListStmt () =
+    Directory.GetFiles(databaseDir, "*.csv")
+    |> Array.iter (fun f -> printfn "%s" (Path.GetFileNameWithoutExtension f))
 
 let evalPrintStmt printStmt =
     let relation = Relation.loadRelation printStmt
@@ -115,6 +124,8 @@ let execute command =
         | ProjectExpression projExp ->
             let relation = evalProjectExpression projExp
             saveWithRandomName relation
+        | ListStmt _ ->
+            evalListStmt()
         | PrintStmt printStmt ->
             evalPrintStmt printStmt
         | AssignStmt assignStmt ->
@@ -128,3 +139,4 @@ execute "print シラバス"
 execute "hoge = (シラバス)"
 execute "fuga = project (Employee) Name, DeptName"
 execute "foo = シラバス" // should be an error
+execute "list"
