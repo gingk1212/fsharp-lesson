@@ -48,14 +48,20 @@ and ProjectExpression =
 
 let pExpression, pExpressionRef = createParserForwardedToRef()
 
+let pBracketIdentifier =
+    pstring "(" >>. pIdentifier .>> pstring ")"
+
+let pExprInExpr =
+    attempt(pstring "(" >>. pExpression .>> pstring ")")
+    <|> (pBracketIdentifier |>> Identifier)
+
 let pProjectExpression =
-    pipe2 (pstring "project" >>. spaces >>. pstring "(" >>. pExpression .>> pstring ")" .>> spaces)
-          pColumnList
+    pipe2 (pstring "project" >>. spaces >>. pExprInExpr .>> spaces) pColumnList
           (fun e c -> { Expression = e; ColumnList = c })
 
 pExpressionRef.Value <-
     (pProjectExpression |>> ProjectExpression)
-    <|> (pIdentifier |>> Identifier)
+    <|> (pBracketIdentifier |>> Identifier)
 
 let pPrintStmt = pstring "print" >>. spaces >>. pIdentifier
 
@@ -64,10 +70,7 @@ type AssignStmt =
       Expression: Expression }
 
 let pAssignStmt = 
-    pipe2 (pIdentifier .>> spaces .>> pstring "=" .>> spaces)
-          ((pstring "(" >>. pIdentifier |>> Identifier .>> pstring ")")
-           <|> (attempt(pIdentifier .>> eof) >>. pzero)
-           <|> pExpression)
+    pipe2 (pIdentifier .>> spaces .>> pstring "=" .>> spaces) pExpression
           (fun r e -> { Rname = r; Expression = e })
 
 type Command =
