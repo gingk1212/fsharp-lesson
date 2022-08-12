@@ -20,3 +20,6 @@ let print (Relation df) =
 
 let save name (Relation df) =
     df.SaveCsv (databaseDir + name + ".csv", includeRowKeys=false)
+
+let columnCount (Relation df) =
+    df.ColumnCount
