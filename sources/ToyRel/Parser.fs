@@ -26,7 +26,7 @@ pExpressionRef.Value <-
     (pProjectExpression |>> Expression.ProjectExpression)
     <|> (pstring "(" >>. pIdentifier .>> pstring ")" |>> Identifier)
 
-let pListStmt = pstring "list"
+let pListStmt = pstring "list" |>> ignore
 
 let pPrintStmt = pstring "print" >>. spaces >>. pIdentifier
 

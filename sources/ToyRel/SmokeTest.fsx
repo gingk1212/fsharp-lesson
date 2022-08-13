@@ -1,3 +1,6 @@
+#r "nuget: FParsec"
+#r "nuget: Deedle"
+
 #load "Common.fs"
 open Common
 
@@ -6,6 +9,8 @@ open Relation
 
 #load "Eval.fs"
 open Eval
+
+#load "Parser.fs"
 
 #load "TestUtils.fs"
 open TestUtils
@@ -42,10 +47,10 @@ match parseCommand "fuga = project (Employee) Name, DeptName" with
 | _ ->
     raiseToyRelException "Parsing result should be 'AssignStmt'"
 
-parseCommandWithFailure "foo = シラバス"
+parseCommandWithFailure "foo = Employee"
 
 match parseCommand "list" with
-| ListStmt a ->
+| ListStmt _ ->
     ()
 | _ ->
     raiseToyRelException "Parsing result should be 'ListStmt'"

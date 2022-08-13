@@ -1,17 +1,8 @@
 ﻿open FParsec
-open System
 open Common
 open Relation
 open Eval
 open Parser
-
-let rand = Random()
-
-let createBaseName () =
-    let prefix = "zz"
-    let randChar _ = char (rand.Next( (int 'a'), (int 'z')+1 ))
-    let randStr = Seq.init 4 randChar |> String.Concat
-    prefix + randStr
 
 let saveWithRandomName relation =
     save (createBaseName()) relation
@@ -25,8 +16,8 @@ let execute command =
             saveWithRandomName relation
         | ListStmt _ ->
             evalListStmt()
-        | PrintStmt printStmt ->
-            evalPrintStmt printStmt
+        | PrintStmt rname ->
+            evalPrintStmt rname
         | AssignStmt assignStmt ->
             evalAssignStmt assignStmt
     | Failure(errorMsg, _, _) ->
