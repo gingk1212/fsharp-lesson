@@ -26,7 +26,7 @@ pExpressionRef.Value <-
     (pProjectExpression |>> Expression.ProjectExpression)
     <|> (pstring "(" >>. pIdentifier .>> pstring ")" |>> Identifier)
 
-let pListStmt = pstring "list" |>> ignore
+let pListStmt = pstring "list"
 
 let pPrintStmt = pstring "print" >>. spaces >>. pIdentifier
 
@@ -35,6 +35,6 @@ let pAssignStmt =
           (fun r e -> { Rname = r; Expression = e })
 
 let pCommand: Parser<_, unit> = (pProjectExpression |>> ProjectExpression)
-                                <|> (pListStmt |>> ListStmt)
+                                <|> (pListStmt >>% ListStmt)
                                 <|> (pPrintStmt |>> PrintStmt)
                                 <|> (pAssignStmt |>> AssignStmt)
