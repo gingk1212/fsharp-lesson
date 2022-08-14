@@ -13,7 +13,7 @@ let loadRelation (name: Identifier) =
     Frame.ReadCsv csv |> fromFrame
 
 let project (columnList: string list) (Relation df) =
-    df.Columns.[columnList] |> Relation
+    df.Columns.[columnList] |> fromFrame
 
 let print (Relation df) =
     df.Print()
