@@ -28,6 +28,8 @@ pExpressionRef.Value <-
 
 let pListStmt = pstring "list"
 
+let pQuitStmt = pstring "quit"
+
 let pPrintStmt = pstring "print" >>. spaces >>. pIdentifier
 
 let pAssignStmt = 
@@ -36,5 +38,6 @@ let pAssignStmt =
 
 let pCommand: Parser<_, unit> = (pProjectExpression |>> ProjectExpression)
                                 <|> (pListStmt >>% ListStmt)
+                                <|> (pQuitStmt >>% QuitStmt)
                                 <|> (pPrintStmt |>> PrintStmt)
                                 <|> (pAssignStmt |>> AssignStmt)

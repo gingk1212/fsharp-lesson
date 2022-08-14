@@ -50,7 +50,13 @@ match parseCommand "fuga = project (Employee) Name, DeptName" with
 parseCommandWithFailure "foo = Employee"
 
 match parseCommand "list" with
-| ListStmt _ ->
+| ListStmt ->
     ()
 | _ ->
     raiseToyRelException "Parsing result should be 'ListStmt'"
+
+match parseCommand "quit" with
+| QuitStmt ->
+    ()
+| _ ->
+    raiseToyRelException "Parsing result should be 'QuitStmt'"

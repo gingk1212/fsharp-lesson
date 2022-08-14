@@ -19,6 +19,7 @@ type AssignStmt =
 type Command =
     | ProjectExpression of ProjectExpression
     | ListStmt
+    | QuitStmt
     | PrintStmt of Identifier
     | AssignStmt of AssignStmt
 
