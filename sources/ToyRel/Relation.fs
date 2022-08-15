@@ -23,3 +23,6 @@ let save (name: Identifier) (Relation df) =
 
 let columnCount (Relation df) =
     df.ColumnCount
+
+let rowCount (Relation df) =
+    df.RowCount

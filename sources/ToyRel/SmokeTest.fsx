@@ -27,6 +27,12 @@ match parseCommand "project (project (Employee) Name, EmpId, DeptName) Name, Emp
 | _ ->
     raiseToyRelException "Parsing result should be 'ProjectExpression'"
 
+match parseCommand "project (book) author" with
+| ProjectExpression p ->
+    evalProjectExpression p |> rowCount |> should 7
+| _ ->
+    raiseToyRelException "Parsing result should be 'ProjectExpression'"
+
 match parseCommand "print Employee" with
 | PrintStmt _ ->
     ()
