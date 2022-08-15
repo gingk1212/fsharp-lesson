@@ -21,6 +21,9 @@ let evalPrintStmt (rname: Identifier) =
     let relation = loadRelation rname
     print relation
 
+let evalUseStmt dbname =
+    changeDB dbname
+
 let evalAssignStmt assignStmt =
     let relation = evalExpression assignStmt.Expression
     save assignStmt.Rname relation

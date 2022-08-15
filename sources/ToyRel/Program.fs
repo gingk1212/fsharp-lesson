@@ -25,6 +25,8 @@ let execute command =
             Environment.Exit 0
         | PrintStmt rname ->
             evalPrintStmt rname
+        | UseStmt dbname ->
+            evalUseStmt dbname
         | AssignStmt assignStmt ->
             evalAssignStmt assignStmt
             printfn "Relation %s returned." assignStmt.Rname

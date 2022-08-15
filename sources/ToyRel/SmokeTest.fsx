@@ -15,6 +15,8 @@ open Eval
 #load "TestUtils.fs"
 open TestUtils
 
+changeDB "wikipedia"
+
 match parseCommand "project (Employee) Name, EmpId, DeptName" with
 | ProjectExpression p ->
     evalProjectExpression p |> columnCount |> should 3
@@ -27,11 +29,13 @@ match parseCommand "project (project (Employee) Name, EmpId, DeptName) Name, Emp
 | _ ->
     raiseToyRelException "Parsing result should be 'ProjectExpression'"
 
+changeDB "library"
 match parseCommand "project (book) author" with
 | ProjectExpression p ->
     evalProjectExpression p |> rowCount |> should 7
 | _ ->
     raiseToyRelException "Parsing result should be 'ProjectExpression'"
+changeDB "wikipedia"
 
 match parseCommand "print Employee" with
 | PrintStmt _ ->
@@ -66,3 +70,10 @@ match parseCommand "quit" with
     ()
 | _ ->
     raiseToyRelException "Parsing result should be 'QuitStmt'"
+
+match parseCommand "use library" with
+| UseStmt u ->
+    evalUseStmt u
+    baseDir + u + "/" |> should databaseDir
+| _ ->
+    raiseToyRelException "Parsing result should be 'UseStmt'"

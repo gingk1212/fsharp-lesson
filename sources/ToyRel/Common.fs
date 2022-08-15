@@ -1,6 +1,7 @@
 module Common
 
 open System
+open System.IO
 
 type Identifier = string
 
@@ -21,9 +22,18 @@ type Command =
     | ListStmt
     | QuitStmt
     | PrintStmt of Identifier
+    | UseStmt of Identifier
     | AssignStmt of AssignStmt
 
-let databaseDir = "database/master/"
+let baseDir = "database/"
+let mutable databaseDir = baseDir + "master/"
+
+let changeDB dbname =
+    let newdbDir = baseDir + dbname + "/"
+    if Directory.Exists newdbDir then
+        databaseDir <- newdbDir
+    else
+        printfn "No such database: %s" dbname
 
 let rand = Random()
 

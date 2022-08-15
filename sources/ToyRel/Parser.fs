@@ -32,6 +32,9 @@ let pQuitStmt = pstring "quit"
 
 let pPrintStmt = pstring "print" >>. spaces >>. pIdentifier
 
+let pUseStmt =
+    pstring "use" >>. spaces >>. pIdentifier
+
 let pAssignStmt = 
     pipe2 (pIdentifier .>> spaces .>> pstring "=" .>> spaces) pExpression
           (fun r e -> { Rname = r; Expression = e })
@@ -40,4 +43,5 @@ let pCommand: Parser<_, unit> = (pProjectExpression |>> ProjectExpression)
                                 <|> (pListStmt >>% ListStmt)
                                 <|> (pQuitStmt >>% QuitStmt)
                                 <|> (pPrintStmt |>> PrintStmt)
+                                <|> (pUseStmt |>> UseStmt)
                                 <|> (pAssignStmt |>> AssignStmt)
