@@ -26,22 +26,26 @@ pExpressionRef.Value <-
     (pProjectExpression |>> Expression.ProjectExpression)
     <|> (pstring "(" >>. pIdentifier .>> pstring ")" |>> Identifier)
 
-let pListStmt = pstring "list"
+let pListStmt =
+    pstring "list" >>% ListStmt
 
-let pQuitStmt = pstring "quit"
+let pQuitStmt =
+    pstring "quit" >>% QuitStmt
 
-let pPrintStmt = pstring "print" >>. spaces >>. pIdentifier
+let pPrintStmt =
+    pstring "print" >>. spaces >>. pIdentifier |>> PrintStmt
 
 let pUseStmt =
-    pstring "use" >>. spaces >>. pIdentifier
+    pstring "use" >>. spaces >>. pIdentifier |>> UseStmt
 
 let pAssignStmt = 
     pipe2 (pIdentifier .>> spaces .>> pstring "=" .>> spaces) pExpression
           (fun r e -> { Rname = r; Expression = e })
+    |>> AssignStmt
 
 let pCommand: Parser<_, unit> = (pProjectExpression |>> ProjectExpression)
-                                <|> (pListStmt >>% ListStmt)
-                                <|> (pQuitStmt >>% QuitStmt)
-                                <|> (pPrintStmt |>> PrintStmt)
-                                <|> (pUseStmt |>> UseStmt)
-                                <|> (pAssignStmt |>> AssignStmt)
+                                <|> pListStmt
+                                <|> pQuitStmt
+                                <|> pPrintStmt
+                                <|> pUseStmt
+                                <|> pAssignStmt
