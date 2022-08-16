@@ -6,17 +6,26 @@ open Common
 let firstIdentifier = "([_@a-zA-Z]|\p{IsHiragana}|\p{IsKatakana}|\p{IsCJKUnifiedIdeographs})"
 let identifier = "([-_@a-zA-Z0-9]|\p{IsHiragana}|\p{IsKatakana}|\p{IsCJKUnifiedIdeographs})*"
 
-let pIdentifier = regex (firstIdentifier + identifier)
+let pIdentifier =
+    regex (firstIdentifier + identifier)
+    |>> Identifier.Identifier
+
 let notSBrackets s = s <> '[' && s <> ']'
-let pSBracketColumn = pstring "[" >>. many1Satisfy notSBrackets .>> pstring "]"
-let pColumn = pIdentifier <|> pSBracketColumn
+let pSBracketColumn =
+    pstring "[" >>. many1Satisfy notSBrackets .>> pstring "]"
+    |>> SBracketColumn
+
+let pColumn =
+    (pIdentifier |>> Column.Identifier)
+    <|> pSBracketColumn
+
 let pComma = spaces >>. pstring "," .>> spaces
 let pColumnList = sepBy1 pColumn pComma
 
 let pExpression, pExpressionRef = createParserForwardedToRef()
 
 let pExprInExpr =
-    pstring "(" >>. (pExpression <|> (pIdentifier |>> Identifier)) .>> pstring ")"
+    pstring "(" >>. (pExpression <|> (pIdentifier |>> Expression.Identifier)) .>> pstring ")"
 
 let pProjectExpression =
     pipe2 (pstring "project" >>. spaces >>. pExprInExpr .>> spaces) pColumnList
@@ -24,7 +33,7 @@ let pProjectExpression =
 
 pExpressionRef.Value <-
     (pProjectExpression |>> Expression.ProjectExpression)
-    <|> (pstring "(" >>. pIdentifier .>> pstring ")" |>> Identifier)
+    <|> (pstring "(" >>. pIdentifier .>> pstring ")" |>> Expression.Identifier)
 
 let pListStmt =
     pstring "list" >>% ListStmt

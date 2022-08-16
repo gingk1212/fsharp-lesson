@@ -7,9 +7,10 @@ open Eval
 open Parser
 
 let saveWithRandomName relation =
-    let name = createBaseName ()
-    save name relation
-    name
+    let identifier = createBaseName ()
+    save identifier relation
+    let (Identifier.Identifier rname) = identifier
+    rname
 
 let execute command =
     match run pCommand command with
@@ -29,7 +30,8 @@ let execute command =
             evalUseStmt dbname
         | AssignStmt assignStmt ->
             evalAssignStmt assignStmt
-            printfn "Relation %s returned." assignStmt.Rname
+            let (Identifier.Identifier rname) = assignStmt.Rname
+            printfn "Relation %s returned." rname
     | Failure(errorMsg, _, _) ->
         printfn "Failure: %s" errorMsg
 

@@ -3,7 +3,11 @@ module Common
 open System
 open System.IO
 
-type Identifier = string
+type Identifier = Identifier of string
+
+type Column =
+    | Identifier of Identifier
+    | SBracketColumn of string
 
 type Expression =
     | Identifier of Identifier
@@ -11,7 +15,7 @@ type Expression =
 
 and ProjectExpression =
     { Expression: Expression 
-      ColumnList: string list }
+      ColumnList: Column list }
 
 type AssignStmt =
     { Rname: Identifier
@@ -28,7 +32,7 @@ type Command =
 let baseDir = "database/"
 let mutable databaseDir = baseDir + "master/"
 
-let changeDB dbname =
+let changeDB (Identifier.Identifier dbname) =
     let newdbDir = baseDir + dbname + "/"
     if Directory.Exists newdbDir then
         databaseDir <- newdbDir
@@ -41,4 +45,4 @@ let createBaseName () =
     let prefix = "zz"
     let randChar _ = char (rand.Next( (int 'a'), (int 'z')+1 ))
     let randStr = Seq.init 4 randChar |> String.Concat
-    prefix + randStr
+    Identifier.Identifier (prefix + randStr)

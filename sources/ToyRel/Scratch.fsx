@@ -20,6 +20,10 @@ open Parser
 #load "TestUtils.fs"
 open TestUtils
 
-match parseCommand "use library" with
-| UseStmt u -> printfn "%s" u
-| _ -> printfn "failure"
+changeDB (Identifier.Identifier "wikipedia")
+
+match parseCommand "project (Employee) Name, EmpId, DeptName" with
+| ProjectExpression p ->
+    evalProjectExpression p |> columnCount |> printfn "%d"
+| _ ->
+    printfn "fail"

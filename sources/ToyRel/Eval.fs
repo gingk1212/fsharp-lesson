@@ -17,7 +17,7 @@ let evalListStmt () =
     Directory.GetFiles(databaseDir, "*.csv")
     |> Array.iter (fun f -> printfn "%s" (Path.GetFileNameWithoutExtension f))
 
-let evalPrintStmt (rname: Identifier) =
+let evalPrintStmt rname =
     let relation = loadRelation rname
     print relation
 

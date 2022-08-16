@@ -15,7 +15,7 @@ open Eval
 #load "TestUtils.fs"
 open TestUtils
 
-changeDB "wikipedia"
+changeDB (Identifier.Identifier "wikipedia")
 
 match parseCommand "project (Employee) Name, EmpId, DeptName" with
 | ProjectExpression p ->
@@ -29,13 +29,13 @@ match parseCommand "project (project (Employee) Name, EmpId, DeptName) Name, Emp
 | _ ->
     raiseToyRelException "Parsing result should be 'ProjectExpression'"
 
-changeDB "library"
+changeDB (Identifier.Identifier "library")
 match parseCommand "project (book) author" with
 | ProjectExpression p ->
     evalProjectExpression p |> rowCount |> should 7
 | _ ->
     raiseToyRelException "Parsing result should be 'ProjectExpression'"
-changeDB "wikipedia"
+changeDB (Identifier.Identifier "wikipedia")
 
 match parseCommand "print Employee" with
 | PrintStmt _ ->
@@ -46,14 +46,16 @@ match parseCommand "print Employee" with
 match parseCommand "hoge = (Employee)" with
 | AssignStmt a ->
     evalExpression a.Expression |> ignore
-    a.Rname |> should "hoge"
+    let (Identifier.Identifier rname) = a.Rname
+    rname |> should "hoge"
 | _ ->
     raiseToyRelException "Parsing result should be 'AssignStmt'"
 
 match parseCommand "fuga = project (Employee) Name, DeptName" with
 | AssignStmt a ->
     evalExpression a.Expression |> ignore
-    a.Rname |> should "fuga"
+    let (Identifier.Identifier rname) = a.Rname
+    rname |> should "fuga"
 | _ ->
     raiseToyRelException "Parsing result should be 'AssignStmt'"
 
@@ -74,6 +76,7 @@ match parseCommand "quit" with
 match parseCommand "use library" with
 | UseStmt u ->
     evalUseStmt u
-    baseDir + u + "/" |> should databaseDir
+    let (Identifier.Identifier dbname) = u
+    baseDir + dbname + "/" |> should databaseDir
 | _ ->
     raiseToyRelException "Parsing result should be 'UseStmt'"
