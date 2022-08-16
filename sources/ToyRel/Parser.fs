@@ -47,10 +47,9 @@ let pPrintStmt =
 let pUseStmt =
     pstring "use" >>. spaces >>. pIdentifier |>> UseStmt
 
-let pAssignStmt = 
+let pAssignStmt =
     pipe2 (pIdentifier .>> spaces .>> pstring "=" .>> spaces) pExpression
-          (fun r e -> { Rname = r; Expression = e })
-    |>> AssignStmt
+          (fun r e -> { Rname = r; Expression = e } |> AssignStmt)
 
 let pCommand: Parser<_, unit> = (pProjectExpression |>> ProjectExpression)
                                 <|> pListStmt
