@@ -49,7 +49,7 @@ let pUseStmt =
 
 let pAssignStmt =
     pipe2 (pIdentifier .>> spaces .>> pstring "=" .>> spaces) pExpression
-          (fun r e -> { Rname = r; Expression = e } |> AssignStmt)
+          (fun r e -> AssignStmt { Rname = r; Expression = e })
 
 let pCommand: Parser<_, unit> = (pProjectExpression |>> ProjectExpression)
                                 <|> pListStmt
