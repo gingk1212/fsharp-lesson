@@ -20,6 +20,10 @@ let execute command =
             let relation = evalProjectExpression projExp
             let rname = saveWithRandomName relation
             printfn "Relation %s returned." rname
+        | DifferenceExpression diffExp ->
+            let relation = evalDifferenceExpression diffExp
+            let rname = saveWithRandomName relation
+            printfn "Relation %s returned." rname
         | ListStmt ->
             evalListStmt ()
         | QuitStmt ->

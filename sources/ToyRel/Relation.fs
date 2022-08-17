@@ -31,3 +31,24 @@ let columnCount (Relation df) =
 
 let rowCount (Relation df) =
     df.RowCount
+
+let isUnionComparable (Relation df1) (Relation df2) =
+    let compKeys () =
+        (df1.ColumnKeys, df2.ColumnKeys)
+        ||> Seq.compareWith (fun col1 col2 -> col1.CompareTo col2)
+
+    let compTypes () =
+        (df1.ColumnTypes, df2.ColumnTypes) 
+        ||> Seq.compareWith (fun type1 type2 -> 
+            if type1.Equals type2 then 0
+            else 1)
+
+    if compKeys () <> 0 || compTypes () <> 0 then false
+    else true
+
+let difference (Relation df1) (Relation df2) =
+    let df2Set = df2.RowsDense.Values |> Seq.toList |> set
+    df1.RowsDense
+    |> Series.filterValues (fun row -> not (df2Set.Contains(row)))
+    |> Frame.ofRows
+    |> fromFrame

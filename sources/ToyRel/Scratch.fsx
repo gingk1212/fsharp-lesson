@@ -3,6 +3,7 @@
 
 #load "Deedle.fsx"
 
+open Deedle
 open FParsec
 
 #load "Common.fs"
@@ -22,8 +23,16 @@ open TestUtils
 
 changeDB (Identifier.Identifier "wikipedia")
 
-match parseCommand "project (Employee) Name, EmpId, DeptName" with
-| ProjectExpression p ->
-    evalProjectExpression p |> columnCount |> printfn "%d"
+match parseCommand "(project (Employee) DeptName) difference (project (Dept) DeptName)" with
+| DifferenceExpression d ->
+    let rel = evalDifferenceExpression d
+    print rel
+| _ ->
+    printfn "fail"
+
+match parseCommand "(project (Employee) EmpId) difference (project (EmployeeTypeMismatch) EmpId)" with
+| DifferenceExpression d ->
+    let rel = evalDifferenceExpression d
+    print rel
 | _ ->
     printfn "fail"

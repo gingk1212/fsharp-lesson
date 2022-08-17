@@ -12,10 +12,15 @@ type Column =
 type Expression =
     | Identifier of Identifier
     | ProjectExpression of ProjectExpression
+    | DifferenceExpression of DifferenceExpression
 
 and ProjectExpression =
     { Expression: Expression 
       ColumnList: Column list }
+
+and DifferenceExpression =
+    { Expression1: Expression
+      Expression2: Expression }
 
 type AssignStmt =
     { Rname: Identifier
@@ -23,6 +28,7 @@ type AssignStmt =
 
 type Command =
     | ProjectExpression of ProjectExpression
+    | DifferenceExpression of DifferenceExpression
     | ListStmt
     | QuitStmt
     | PrintStmt of Identifier

@@ -17,6 +17,7 @@ open TestUtils
 
 changeDB (Identifier.Identifier "wikipedia")
 
+// ProjectExpression
 match parseCommand "project (Employee) Name, EmpId, DeptName" with
 | ProjectExpression p ->
     evalProjectExpression p |> columnCount |> should 3
@@ -37,12 +38,27 @@ match parseCommand "project (book) author" with
     raiseToyRelException "Parsing result should be 'ProjectExpression'"
 changeDB (Identifier.Identifier "wikipedia")
 
+// DifferenceExpression
+match parseCommand "(project (Employee) DeptName) difference (project (Dept) DeptName)" with
+| DifferenceExpression d ->
+    evalDifferenceExpression d |> rowCount |> should 1
+| _ ->
+    raiseToyRelException "Parsing result should be 'DifferenceExpression'"
+
+// match parseCommand "(project (Employee) EmpId) difference (project (EmployeeTypeMismatch) EmpId)" with
+// | DifferenceExpression d ->
+//     evalDifferenceExpression d |> ignore
+// | _ ->
+//     raiseToyRelException "Parsing result should be 'DifferenceExpression'"
+
+// PrintStmt
 match parseCommand "print Employee" with
 | PrintStmt _ ->
     ()
 | _ ->
     raiseToyRelException "Parsing result should be 'PrintStmt'"
 
+// AssignStmt
 match parseCommand "hoge = (Employee)" with
 | AssignStmt a ->
     evalExpression a.Expression |> ignore
@@ -59,24 +75,36 @@ match parseCommand "fuga = project (Employee) Name, DeptName" with
 | _ ->
     raiseToyRelException "Parsing result should be 'AssignStmt'"
 
+match parseCommand "r2 = (project (Employee) DeptName) difference (project (Dept) DeptName)" with
+| AssignStmt a ->
+    evalExpression a.Expression |> ignore
+    let (Identifier.Identifier rname) = a.Rname
+    rname |> should "r2"
+| _ ->
+    raiseToyRelException "Parsing result should be 'AssignStmt'"
+
 parseCommandWithFailure "foo = Employee"
 
+// ListStmt
 match parseCommand "list" with
 | ListStmt ->
     ()
 | _ ->
     raiseToyRelException "Parsing result should be 'ListStmt'"
 
+// QuitStmt
 match parseCommand "quit" with
 | QuitStmt ->
     ()
 | _ ->
     raiseToyRelException "Parsing result should be 'QuitStmt'"
 
+// UseStmt
 match parseCommand "use library" with
 | UseStmt u ->
     evalUseStmt u
     let (Identifier.Identifier dbname) = u
     baseDir + dbname + "/" |> should databaseDir
+    changeDB (Identifier.Identifier "wikipedia")
 | _ ->
     raiseToyRelException "Parsing result should be 'UseStmt'"

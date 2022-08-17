@@ -31,8 +31,13 @@ let pProjectExpression =
     pipe2 (pstring "project" >>. spaces >>. pExprInExpr .>> spaces) pColumnList
           (fun e c -> { Expression = e; ColumnList = c })
 
+let pDifferenceExpression =
+    pipe2 pExprInExpr (spaces >>. pstring "difference" >>. spaces >>. pExprInExpr)
+          (fun e1 e2 -> { Expression1 = e1; Expression2 = e2 })
+
 pExpressionRef.Value <-
     (pProjectExpression |>> Expression.ProjectExpression)
+    <|> attempt(pDifferenceExpression |>> Expression.DifferenceExpression)
     <|> (pstring "(" >>. pIdentifier .>> pstring ")" |>> Expression.Identifier)
 
 let pListStmt =
@@ -52,6 +57,7 @@ let pAssignStmt =
           (fun r e -> AssignStmt { Rname = r; Expression = e })
 
 let pCommand: Parser<_, unit> = (pProjectExpression |>> ProjectExpression)
+                                <|> (pDifferenceExpression |>> DifferenceExpression)
                                 <|> pListStmt
                                 <|> pQuitStmt
                                 <|> pPrintStmt
