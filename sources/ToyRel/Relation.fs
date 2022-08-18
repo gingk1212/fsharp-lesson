@@ -1,5 +1,6 @@
 module Relation
 
+open System.Collections.Generic
 open Deedle
 open Common
 
@@ -47,7 +48,7 @@ let isUnionComparable (Relation df1) (Relation df2) =
     else true
 
 let difference (Relation df1) (Relation df2) =
-    let df2Set = df2.RowsDense.Values |> Seq.toList |> set
+    let df2Set = df2.RowsDense.Values |> Seq.toList |> HashSet
     df1.RowsDense
     |> Series.filterValues (fun row -> not (df2Set.Contains(row)))
     |> Frame.ofRows
