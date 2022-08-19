@@ -67,22 +67,6 @@ match parseCommand "hoge = (Employee)" with
 | _ ->
     raiseToyRelException "Parsing result should be 'AssignStmt'"
 
-match parseCommand "project = (Employee)" with
-| AssignStmt a ->
-    evalExpression a.Expression |> ignore
-    let (Identifier.Identifier rname) = a.Rname
-    rname |> should "project"
-| _ ->
-    raiseToyRelException "Parsing result should be 'AssignStmt'"
-
-match parseCommand "print = (Employee)" with
-| AssignStmt a ->
-    evalExpression a.Expression |> ignore
-    let (Identifier.Identifier rname) = a.Rname
-    rname |> should "print"
-| _ ->
-    raiseToyRelException "Parsing result should be 'AssignStmt'"
-
 match parseCommand "fuga = project (Employee) Name, DeptName" with
 | AssignStmt a ->
     evalExpression a.Expression |> columnCount |> should 2
@@ -98,6 +82,10 @@ match parseCommand "r2 = (project (Employee) DeptName) difference (project (Dept
     rname |> should "r2"
 | _ ->
     raiseToyRelException "Parsing result should be 'AssignStmt'"
+
+parseCommandWithFailure "project = (Employee)"
+
+parseCommandWithFailure "list = (Employee)"
 
 parseCommandWithFailure "foo = Employee"
 

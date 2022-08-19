@@ -46,29 +46,26 @@ pExpressionRef.Value <-
     <|> (pDifferenceExpression |>> Expression.DifferenceExpression)
 
 let pListStmt =
-    pstring "list" >>% ListStmt
+    pstring "list" .>> eof >>% ListStmt
 
 let pQuitStmt =
-    pstring "quit" >>% QuitStmt
+    pstring "quit" .>> eof >>% QuitStmt
 
 let pPrintStmt =
-    pstring "print" >>. spaces >>. pIdentifier |>> PrintStmt
+    pstring "print" >>. spaces >>. pIdentifier .>> eof |>> PrintStmt
 
 let pUseStmt =
-    pstring "use" >>. spaces >>. pIdentifier |>> UseStmt
+    pstring "use" >>. spaces >>. pIdentifier .>> eof |>> UseStmt
 
-// Since pAssignStmt is at the top, the following statements are mismatched. So
-// apply attempt.
-// > print Employee
-// > project (Employee) Name, EmpId, DeptName
 let pAssignStmt =
-    attempt (pipe2 (pIdentifier .>> spaces .>> pstring "=" .>> spaces) pExpression
-                   (fun r e -> AssignStmt { Rname = r; Expression = e }))
+    pipe2 (pIdentifier .>> spaces .>> pstring "=" .>> spaces) pExpression
+          (fun r e -> AssignStmt { Rname = r; Expression = e })
+    .>> eof
 
-let pCommand: Parser<_, unit> = pAssignStmt
+let pCommand: Parser<_, unit> = (pProjectExpression |>> ProjectExpression)
+                                <|> (pDifferenceExpression |>> DifferenceExpression)
                                 <|> pListStmt
                                 <|> pQuitStmt
                                 <|> pPrintStmt
                                 <|> pUseStmt
-                                <|> (pProjectExpression |>> ProjectExpression)
-                                <|> (pDifferenceExpression |>> DifferenceExpression)
+                                <|> pAssignStmt

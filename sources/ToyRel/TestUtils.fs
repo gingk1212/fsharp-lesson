@@ -22,7 +22,7 @@ let parseCommand str =
 
 let parseCommandWithFailure str =
     match run pCommand str with
-    | Success(_, _, _) ->
-        raiseToyRelException ("Parsing should fail")
+    | Success(result, _, _) ->
+        raiseToyRelException (sprintf "Parsing should fail, but succeeded with: \n%A" result)
     | Failure(errorMsg, _, _) ->
         ()
