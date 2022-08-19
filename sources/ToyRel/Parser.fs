@@ -35,10 +35,15 @@ let pDifferenceExpression =
     pipe2 pExprInExpr (spaces >>. pstring "difference" >>. spaces >>. pExprInExpr)
           (fun e1 e2 -> { Expression1 = e1; Expression2 = e2 })
 
+// Since it is difficult to distinguish whether the right-hand sides of the
+// following statements are Identifier or DifferenceExpression, apply attempt
+// to pIdentifier.
+// > hoge = (Employee)
+// > hoge = (project (Employee) DeptName) difference (project (Dept) DeptName)
 pExpressionRef.Value <-
-    (pProjectExpression |>> Expression.ProjectExpression)
-    <|> attempt(pDifferenceExpression |>> Expression.DifferenceExpression)
-    <|> (pstring "(" >>. pIdentifier .>> pstring ")" |>> Expression.Identifier)
+    attempt(pstring "(" >>. pIdentifier .>> pstring ")" |>> Expression.Identifier)
+    <|> (pProjectExpression |>> Expression.ProjectExpression)
+    <|> (pDifferenceExpression |>> Expression.DifferenceExpression)
 
 let pListStmt =
     pstring "list" >>% ListStmt
@@ -52,14 +57,18 @@ let pPrintStmt =
 let pUseStmt =
     pstring "use" >>. spaces >>. pIdentifier |>> UseStmt
 
+// Since pAssignStmt is at the top, the following statements are mismatched. So
+// apply attempt.
+// > print Employee
+// > project (Employee) Name, EmpId, DeptName
 let pAssignStmt =
-    pipe2 (pIdentifier .>> spaces .>> pstring "=" .>> spaces) pExpression
-          (fun r e -> AssignStmt { Rname = r; Expression = e })
+    attempt (pipe2 (pIdentifier .>> spaces .>> pstring "=" .>> spaces) pExpression
+                   (fun r e -> AssignStmt { Rname = r; Expression = e }))
 
-let pCommand: Parser<_, unit> = (pProjectExpression |>> ProjectExpression)
-                                <|> (pDifferenceExpression |>> DifferenceExpression)
+let pCommand: Parser<_, unit> = pAssignStmt
                                 <|> pListStmt
                                 <|> pQuitStmt
                                 <|> pPrintStmt
                                 <|> pUseStmt
-                                <|> pAssignStmt
+                                <|> (pProjectExpression |>> ProjectExpression)
+                                <|> (pDifferenceExpression |>> DifferenceExpression)
