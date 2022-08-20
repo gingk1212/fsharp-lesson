@@ -25,14 +25,16 @@ changeDB (Identifier.Identifier "wikipedia")
 
 match parseCommand "(project (Employee) DeptName) difference (project (Dept) DeptName)" with
 | DifferenceExpression d ->
-    let rel = evalDifferenceExpression d
-    print rel
+    evalDifferenceExpression d
+    |> Result.map print
+    |> printfn "%A"
 | _ ->
     printfn "fail"
 
 match parseCommand "(project (Employee) EmpId) difference (project (EmployeeTypeMismatch) EmpId)" with
 | DifferenceExpression d ->
-    let rel = evalDifferenceExpression d
-    print rel
+    evalDifferenceExpression d
+    |> Result.map print
+    |> printfn "%A"
 | _ ->
     printfn "fail"

@@ -11,28 +11,34 @@ let rec evalExpression expression =
     | Expression.DifferenceExpression de -> evalDifferenceExpression de
 
 and evalProjectExpression projExp =
-    let relation = evalExpression projExp.Expression
-    project projExp.ColumnList relation
+    evalExpression projExp.Expression
+    |> Result.bind (project projExp.ColumnList)
 
 and evalDifferenceExpression diffExp =
-    let rel1 = evalExpression diffExp.Expression1
-    let rel2 = evalExpression diffExp.Expression2
-    if isUnionComparable rel1 rel2 then
-        difference rel1 rel2
-    else
-        failwith "Relations are not union comparable."
+    evalExpression diffExp.Expression1
+    |> Result.bind (fun rel1 ->
+        evalExpression diffExp.Expression2
+        |> Result.bind (fun rel2 ->
+            if isUnionComparable rel1 rel2 then
+                difference rel1 rel2
+            else
+                Result.Error "Relations are not union comparable."))
 
 let evalListStmt () =
-    Directory.GetFiles(databaseDir, "*.csv")
-    |> Array.iter (fun f -> printfn "%s" (Path.GetFileNameWithoutExtension f))
+    try
+        Directory.GetFiles(databaseDir, "*.csv")
+        |> Array.iter (fun f -> printfn "%s" (Path.GetFileNameWithoutExtension f))
+        Result.Ok ()
+    with
+        | err -> Result.Error err.Message
 
 let evalPrintStmt rname =
-    let relation = loadRelation rname
-    print relation
+    loadRelation rname
+    |> Result.map print
 
 let evalUseStmt dbname =
     changeDB dbname
 
 let evalAssignStmt assignStmt =
-    let relation = evalExpression assignStmt.Expression
-    save assignStmt.Rname relation
+    evalExpression assignStmt.Expression
+    |> Result.bind (save assignStmt.Rname)

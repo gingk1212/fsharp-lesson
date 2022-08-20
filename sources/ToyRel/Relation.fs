@@ -11,21 +11,31 @@ let fromFrame (df: Frame<int, string>) =
 
 let loadRelation (Identifier.Identifier name) =
     let csv = databaseDir + name + ".csv"
-    Frame.ReadCsv csv |> fromFrame
+    try
+        Result.Ok (Frame.ReadCsv csv |> fromFrame)
+    with
+        | err -> Result.Error err.Message
 
 let project columnList (Relation df) =
-    let strList = columnList |> List.map (fun column ->
-        match column with
-        | Column.Identifier (Identifier.Identifier id) -> id
-        | SBracketColumn sb -> sb
-    )
-    df.Columns.[strList] |> fromFrame
+    try
+        let strList = columnList |> List.map (fun column ->
+            match column with
+            | Column.Identifier (Identifier.Identifier id) -> id
+            | SBracketColumn sb -> sb
+        )
+        Result.Ok (df.Columns.[strList] |> fromFrame)
+    with
+        | err -> Result.Error err.Message
 
 let print (Relation df) =
     df.Print()
 
 let save (Identifier.Identifier name) (Relation df) =
-    df.SaveCsv (databaseDir + name + ".csv", includeRowKeys=false)
+    try
+        df.SaveCsv (databaseDir + name + ".csv", includeRowKeys=false)
+        Result.Ok ()
+    with
+        | err -> Result.Error err.Message
 
 let columnCount (Relation df) =
     df.ColumnCount
@@ -48,8 +58,12 @@ let isUnionComparable (Relation df1) (Relation df2) =
     else true
 
 let difference (Relation df1) (Relation df2) =
-    let df2Set = df2.RowsDense.Values |> Seq.toList |> HashSet
-    df1.RowsDense
-    |> Series.filterValues (fun row -> not (df2Set.Contains(row)))
-    |> Frame.ofRows
-    |> fromFrame
+    try
+        let df2Set = df2.RowsDense.Values |> Seq.toList |> HashSet
+        df1.RowsDense
+        |> Series.filterValues (fun row -> not (df2Set.Contains(row)))
+        |> Frame.ofRows
+        |> fromFrame
+        |> Result.Ok
+    with
+        | err -> Result.Error err.Message

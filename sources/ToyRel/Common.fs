@@ -42,8 +42,9 @@ let changeDB (Identifier.Identifier dbname) =
     let newdbDir = baseDir + dbname + "/"
     if Directory.Exists newdbDir then
         databaseDir <- newdbDir
+        Result.Ok ()
     else
-        printfn "No such database: %s" dbname
+        Result.Error (sprintf "No such database: %s" dbname)
 
 let rand = Random()
 
