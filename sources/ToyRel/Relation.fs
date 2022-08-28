@@ -67,3 +67,141 @@ let difference (Relation df1) (Relation df2) =
         |> Result.Ok
     with
         | err -> Result.Error err.Message
+
+let private getColumnType col (df: Frame<int, string>) =
+    let col = getNameFromColumn col
+    let colType = df.Columns.[[ col ]].ColumnTypes |> Seq.toList
+    colType.[0]
+
+let private checkColumnType tp col (df: Frame<int, string>) =
+    let colType = getColumnType col df
+    if colType = typeof<System.Object> then
+        Result.Error (sprintf "No such column: %s" (getNameFromColumn col))
+    else
+        colType = tp |> Result.Ok
+
+let private isThetaComparable cond (df: Frame<int, string>) =
+    match cond.BinOperandL with
+    | Int _ ->
+        match cond.BinOperandR with
+        | Int _ -> true |> Result.Ok
+        | Str _ -> false |> Result.Ok
+        | Column col ->
+            checkColumnType typeof<int> col df
+    | Str _ ->
+        match cond.BinOperandR with
+        | Int _ -> false |> Result.Ok
+        | Str _ -> true |> Result.Ok
+        | Column col ->
+            checkColumnType typeof<string> col df
+    | Column colL ->
+        match cond.BinOperandR with
+        | Int _ ->
+            checkColumnType typeof<int> colL df
+        | Str _ ->
+            checkColumnType typeof<string> colL df
+        | Column col ->
+            let col = getNameFromColumn col
+            let colType = df.Columns.[[ col ]].ColumnTypes |> Seq.toList
+            checkColumnType colType.[0] colL df
+
+let private filter fn row =
+    try
+        row
+        |> Series.filterValues fn
+        |> Frame.ofRows
+        |> fromFrame
+        |> Result.Ok
+    with
+        | err -> Result.Error err.Message
+
+let private compareColumnAndLiteral<'T when 'T : comparison> binop colL right isNot (row: ObjectSeries<string>) =
+    let colL = getNameFromColumn colL
+    let result = 
+        match binop with
+        | "<=" ->
+            row.GetAs<'T>(colL) <= right
+        | "=" ->
+            row.GetAs<'T>(colL) = right
+        | ">=" ->
+            row.GetAs<'T>(colL) >= right
+        | "<>" ->
+            row.GetAs<'T>(colL) <> right
+        | "<" ->
+            row.GetAs<'T>(colL) < right
+        | ">" ->
+            row.GetAs<'T>(colL) > right
+        | _ ->
+            failwithf "\"%s\" is not a binary operator." binop
+    if isNot then not result
+    else result
+
+let private compareColumns<'T when 'T : comparison> binop colL colR isNot (row: ObjectSeries<string>) =
+    let colR = getNameFromColumn colR
+    let right = row.GetAs<'T>(colR)
+    compareColumnAndLiteral binop colL right isNot row
+
+let restrict cond (Relation df) =
+    let doRestrict colL =
+        let (BinOp binop) = cond.BinOp
+        let isNot = cond.Not
+        match cond.BinOperandR with
+        | Int intR ->
+            df.RowsDense
+            |> filter (compareColumnAndLiteral binop colL intR isNot)
+        | Str (Identifier.Identifier strR) ->
+            df.RowsDense
+            |> filter (compareColumnAndLiteral binop colL strR isNot)
+        | Column colR ->
+            match getColumnType colL df with
+            | t when t = typeof<int> ->
+                df.RowsDense
+                |> filter (compareColumns<int> binop colL colR isNot)
+            | t when t = typeof<string> ->
+                df.RowsDense
+                |> filter (compareColumns<string> binop colL colR isNot)
+            | t ->
+                Result.Error (sprintf "Invalid column type: %A" t)
+
+    match cond.BinOperandL with
+    | Int _ | Str _ ->
+        Result.Error "The left side of the condition expression must be column name."
+    | Column colL ->
+        match isThetaComparable cond df with
+        | Result.Ok ok when ok = true ->
+            doRestrict colL
+        | Result.Ok _ ->
+            Result.Error "Relations are not theta-comparable."
+        | Result.Error err ->
+            Result.Error err
+
+
+let binOpAnd relL relR =
+    if isUnionComparable relL relR then
+        try
+            let (Relation dfL) = relL
+            let (Relation dfR) = relR
+            let dfRSet = dfR.RowsDense.Values |> Seq.toList |> HashSet
+
+            dfL.RowsDense
+            |> filter (fun row -> dfRSet.Contains(row))
+        with
+            | err -> Result.Error err.Message
+    else
+        Result.Error "Relations are not union comparable."
+
+let binOpOr relL relR =
+    if isUnionComparable relL relR then
+        try
+            let (Relation dfL) = relL
+            let (Relation dfR) = relR
+
+            Seq.append dfL.RowsDense.Values dfR.RowsDense.Values
+            |> Series.ofValues
+            |> Frame.ofRows
+            |> fromFrame
+            |> Result.Ok
+        with
+            | err -> Result.Error err.Message
+    else
+        Result.Error "Relations are not union comparable."

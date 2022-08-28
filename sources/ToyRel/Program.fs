@@ -39,6 +39,10 @@ let execute command =
             evalDifferenceExpression diffExp
             |> Result.bind saveWithRandomName
             |> checkRelationResult
+        | RestrictExpression restrictExp ->
+            evalRestrictExpression restrictExp
+            |> Result.bind saveWithRandomName
+            |> checkRelationResult
         | ListStmt ->
             evalListStmt ()
             |> checkUnitResult
