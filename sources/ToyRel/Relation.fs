@@ -68,42 +68,41 @@ let difference (Relation df1) (Relation df2) =
     with
         | err -> Result.Error err.Message
 
-let private getColumnType col (df: Frame<int, string>) =
-    let col = getNameFromColumn col
-    let colType = df.Columns.[[ col ]].ColumnTypes |> Seq.toList
+let private getColumnType col (Relation df) =
+    let colName = getNameFromColumn col
+    let colType = df.Columns.[[ colName ]].ColumnTypes |> Seq.toList
     colType.[0]
 
-let private checkColumnType tp col (df: Frame<int, string>) =
-    let colType = getColumnType col df
+let private checkColumnType tp col rel =
+    let colType = getColumnType col rel
     if colType = typeof<System.Object> then
         Result.Error (sprintf "No such column: %s" (getNameFromColumn col))
     else
         colType = tp |> Result.Ok
 
-let private isThetaComparable cond (df: Frame<int, string>) =
-    match cond.BinOperandL with
-    | Int _ ->
-        match cond.BinOperandR with
-        | Int _ -> true |> Result.Ok
-        | Str _ -> false |> Result.Ok
-        | Column col ->
-            checkColumnType typeof<int> col df
-    | Str _ ->
-        match cond.BinOperandR with
-        | Int _ -> false |> Result.Ok
-        | Str _ -> true |> Result.Ok
-        | Column col ->
-            checkColumnType typeof<string> col df
-    | Column colL ->
-        match cond.BinOperandR with
-        | Int _ ->
-            checkColumnType typeof<int> colL df
-        | Str _ ->
-            checkColumnType typeof<string> colL df
-        | Column col ->
-            let col = getNameFromColumn col
-            let colType = df.Columns.[[ col ]].ColumnTypes |> Seq.toList
-            checkColumnType colType.[0] colL df
+let private isThetaComparable cond rel =
+    match cond.BinOperandL, cond.BinOperandR with
+    | Int _, Int _ ->
+        true |> Result.Ok
+    | Int _, Str _ ->
+        false |> Result.Ok
+    | Int _, Column col ->
+        checkColumnType typeof<int> col rel
+    | Str _, Int _ ->
+        false |> Result.Ok
+    | Str _, Str _ ->
+        true |> Result.Ok
+    | Str _, Column col ->
+        checkColumnType typeof<string> col rel
+    | Column colL, Int _ ->
+        checkColumnType typeof<int> colL rel
+    | Column colL, Str _ ->
+        checkColumnType typeof<string> colL rel
+    | Column colL, Column col ->
+        let (Relation df) = rel
+        let colName = getNameFromColumn col
+        let colType = df.Columns.[[ colName ]].ColumnTypes |> Seq.toList
+        checkColumnType colType.[0] colL rel
 
 let private filter fn row =
     try
@@ -116,35 +115,42 @@ let private filter fn row =
         | err -> Result.Error err.Message
 
 let private compareColumnAndLiteral<'T when 'T : comparison> binop colL right isNot (row: ObjectSeries<string>) =
-    let colL = getNameFromColumn colL
+    let colLName = getNameFromColumn colL
     let result = 
         match binop with
         | "<=" ->
-            row.GetAs<'T>(colL) <= right
+            row.GetAs<'T>(colLName) <= right
         | "=" ->
-            row.GetAs<'T>(colL) = right
+            row.GetAs<'T>(colLName) = right
         | ">=" ->
-            row.GetAs<'T>(colL) >= right
+            row.GetAs<'T>(colLName) >= right
         | "<>" ->
-            row.GetAs<'T>(colL) <> right
+            row.GetAs<'T>(colLName) <> right
         | "<" ->
-            row.GetAs<'T>(colL) < right
+            row.GetAs<'T>(colLName) < right
         | ">" ->
-            row.GetAs<'T>(colL) > right
+            row.GetAs<'T>(colLName) > right
         | _ ->
             failwithf "\"%s\" is not a binary operator." binop
     if isNot then not result
     else result
 
 let private compareColumns<'T when 'T : comparison> binop colL colR isNot (row: ObjectSeries<string>) =
-    let colR = getNameFromColumn colR
-    let right = row.GetAs<'T>(colR)
+    let colRName = getNameFromColumn colR
+    let right = row.GetAs<'T>(colRName)
     compareColumnAndLiteral binop colL right isNot row
 
-let restrict cond (Relation df) =
+let restrict condAtom rel =
+    let (cond, isNot) =
+        match condAtom with
+        | CondAtom.CondAtom c ->
+            (c, false)
+        | CondAtom.CondAtomWithNot c -> 
+            (c, true)
+
     let doRestrict colL =
+        let (Relation df) = rel
         let (BinOp binop) = cond.BinOp
-        let isNot = cond.Not
         match cond.BinOperandR with
         | Int intR ->
             df.RowsDense
@@ -153,7 +159,7 @@ let restrict cond (Relation df) =
             df.RowsDense
             |> filter (compareColumnAndLiteral binop colL strR isNot)
         | Column colR ->
-            match getColumnType colL df with
+            match getColumnType colL rel with
             | t when t = typeof<int> ->
                 df.RowsDense
                 |> filter (compareColumns<int> binop colL colR isNot)
@@ -167,7 +173,7 @@ let restrict cond (Relation df) =
     | Int _ | Str _ ->
         Result.Error "The left side of the condition expression must be column name."
     | Column colL ->
-        match isThetaComparable cond df with
+        match isThetaComparable cond rel with
         | Result.Ok ok when ok = true ->
             doRestrict colL
         | Result.Ok _ ->

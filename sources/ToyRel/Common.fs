@@ -16,11 +16,14 @@ type BinOperand =
     | Str of Identifier
     | Column of Column
 
-type CondAtom =
+type CondAtomRecord =
     { BinOperandL: BinOperand
       BinOperandR: BinOperand
-      BinOp: BinOp
-      Not: bool }
+      BinOp: BinOp }
+
+type CondAtom =
+    | CondAtom of CondAtomRecord
+    | CondAtomWithNot of CondAtomRecord
 
 type Condition =
     | AndCond of AndCond

@@ -2,6 +2,9 @@ module TestUtils
 
 open System
 open FParsec
+open Common
+open Relation
+open Eval
 open Parser
 
 type ToyRelException(message) = inherit Exception(message)
@@ -40,3 +43,32 @@ let parseCommandWithFailure str =
         raiseToyRelException (sprintf "Parsing should fail, but succeeded with: \n%A" result)
     | Failure(_, _, _) ->
         ()
+
+let testProjectExpression cmd =
+    match parseCommand cmd with
+    | ProjectExpression p ->
+        evalProjectExpression p
+    | _ ->
+        raiseToyRelException "Parsing result should be 'ProjectExpression'"
+
+let testDifferenceExpression cmd =
+    match parseCommand cmd with
+    | DifferenceExpression d ->
+        evalDifferenceExpression d
+    | _ ->
+        raiseToyRelException "Parsing result should be 'DifferenceExpression'"
+
+let testRestrictExpression cmd =
+    match parseCommand cmd with
+    | RestrictExpression r ->
+        evalRestrictExpression r
+    | _ ->
+        raiseToyRelException "Parsing result should be 'RestrictExpression'"
+
+let parseAssignStmt cmd =
+    match parseCommand cmd with
+    | AssignStmt a ->
+        a
+    | _ ->
+        raiseToyRelException "Parsing result should be 'AssignStmt'"
+

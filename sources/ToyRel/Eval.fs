@@ -5,8 +5,8 @@ open Common
 open Relation
 
 // Condition evaluator
-let evalCondAtom cond rel =
-    restrict cond rel
+let evalCondAtom condAtom rel =
+    restrict condAtom rel
 
 let rec evalCondition cond rel =
     match cond with

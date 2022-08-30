@@ -20,55 +20,36 @@ changeDB (Identifier.Identifier "wikipedia")
 //
 // ProjectExpression test
 //
-match parseCommand "project (Employee) Name, EmpId, DeptName" with
-| ProjectExpression p ->
-    evalProjectExpression p
-    |> shouldOk
-    |> columnCount
-    |> should 3
-| _ ->
-    raiseToyRelException "Parsing result should be 'ProjectExpression'"
+testProjectExpression "project (Employee) Name, EmpId, DeptName"
+|> shouldOk
+|> columnCount
+|> should 3
 
-match parseCommand "project (project (Employee) Name, EmpId, DeptName) Name, EmpId" with
-| ProjectExpression p -> 
-    evalProjectExpression p
-    |> shouldOk
-    |> columnCount
-    |> should 2
-| _ ->
-    raiseToyRelException "Parsing result should be 'ProjectExpression'"
+testProjectExpression "project (project (Employee) Name, EmpId, DeptName) Name, EmpId"
+|> shouldOk
+|> columnCount
+|> should 2
 
 changeDB (Identifier.Identifier "library")
-match parseCommand "project (book) author" with
-| ProjectExpression p ->
-    evalProjectExpression p
-    |> shouldOk
-    |> rowCount
-    |> should 7
-| _ ->
-    raiseToyRelException "Parsing result should be 'ProjectExpression'"
+
+testProjectExpression "project (book) author"
+|> shouldOk
+|> rowCount
+|> should 7
+
 changeDB (Identifier.Identifier "wikipedia")
 
 
 //
 // DifferenceExpression test
 //
-match parseCommand "(project (Employee) DeptName) difference (project (Dept) DeptName)" with
-| DifferenceExpression d ->
-    evalDifferenceExpression d
-    |> shouldOk
-    |> rowCount
-    |> should 1
-| _ ->
-    raiseToyRelException "Parsing result should be 'DifferenceExpression'"
+testDifferenceExpression "(project (Employee) DeptName) difference (project (Dept) DeptName)"
+|> shouldOk
+|> rowCount
+|> should 1
 
-match parseCommand "(project (Employee) EmpId) difference (project (EmployeeTypeMismatch) EmpId)" with
-| DifferenceExpression d ->
-    evalDifferenceExpression d
-    |> shouldError
-| _ ->
-    raiseToyRelException "Parsing result should be 'DifferenceExpression'"
-
+testDifferenceExpression "(project (Employee) EmpId) difference (project (EmployeeTypeMismatch) EmpId)"
+|> shouldError
 
 
 //
@@ -77,129 +58,69 @@ match parseCommand "(project (Employee) EmpId) difference (project (EmployeeType
 changeDB (Identifier.Identifier "library")
 
 // Ok
-match parseCommand "restrict (auction) ([sell_price]>[purchase_price])" with
-| RestrictExpression r ->
-    evalRestrictExpression r
-    |> shouldOk
-    |> rowCount
-    |> should 3
-| _ ->
-    raiseToyRelException "Parsing result should be 'RestrictExpression'"
+testRestrictExpression "restrict (auction) ([sell_price]>[purchase_price])"
+|> shouldOk
+|> rowCount
+|> should 3
 
-match parseCommand "restrict (auction) ([date_bought]=[date_sold])" with
-| RestrictExpression r ->
-    evalRestrictExpression r
-    |> shouldOk
-    |> rowCount
-    |> should 0
-| _ ->
-    raiseToyRelException "Parsing result should be 'RestrictExpression'"
+testRestrictExpression "restrict (auction) ([date_bought]=[date_sold])"
+|> shouldOk
+|> rowCount
+|> should 0
 
-match parseCommand "restrict (auction) ([reference]=\"R005\")" with
-| RestrictExpression r ->
-    evalRestrictExpression r
-    |> shouldOk
-    |> rowCount
-    |> should 1
-| _ ->
-    raiseToyRelException "Parsing result should be 'RestrictExpression'"
+testRestrictExpression "restrict (auction) ([reference]=\"R005\")"
+|> shouldOk
+|> rowCount
+|> should 1
 
-match parseCommand "restrict (auction) (([reference]<>\"R005\") and ([purchase_price]>5))" with
-| RestrictExpression r ->
-    evalRestrictExpression r
-    |> shouldOk
-    |> rowCount
-    |> should 2
-| _ ->
-    raiseToyRelException "Parsing result should be 'RestrictExpression'"
+testRestrictExpression "restrict (auction) (([reference]<>\"R005\") and ([purchase_price]>5))"
+|> shouldOk
+|> rowCount
+|> should 2
 
-match parseCommand "restrict (auction) (([reference]<>\"R005\") and ([purchase_price]>5) or ([sell_price]<=12))" with
-| RestrictExpression r ->
-    evalRestrictExpression r
-    |> shouldOk
-    |> rowCount
-    |> should 4
-| _ ->
-    raiseToyRelException "Parsing result should be 'RestrictExpression'"
+testRestrictExpression "restrict (auction) (([reference]<>\"R005\") and ([purchase_price]>5) or ([sell_price]<=12))"
+|> shouldOk
+|> rowCount
+|> should 4
 
-match parseCommand "restrict (auction) (not [sell_price]>[purchase_price])" with
-| RestrictExpression r ->
-    evalRestrictExpression r
-    |> shouldOk
-    |> rowCount
-    |> should 3
-| _ ->
-    raiseToyRelException "Parsing result should be 'RestrictExpression'"
+testRestrictExpression "restrict (auction) (not [sell_price]>[purchase_price])"
+|> shouldOk
+|> rowCount
+|> should 3
 
-match parseCommand "restrict (auction) (not ([sell_price]>[purchase_price]))" with
-| RestrictExpression r ->
-    evalRestrictExpression r
-    |> shouldOk
-    |> rowCount
-    |> should 3
-| _ ->
-    raiseToyRelException "Parsing result should be 'RestrictExpression'"
+testRestrictExpression "restrict (auction) (not ([sell_price]>[purchase_price]))"
+|> shouldOk
+|> rowCount
+|> should 3
 
-match parseCommand "restrict (auction) (([reference]<>\"R005\") and not ([purchase_price]>5))" with
-| RestrictExpression r ->
-    evalRestrictExpression r
-    |> shouldOk
-    |> rowCount
-    |> should 3
-| _ ->
-    raiseToyRelException "Parsing result should be 'RestrictExpression'"
+testRestrictExpression "restrict (auction) (([reference]<>\"R005\") and not ([purchase_price]>5))"
+|> shouldOk
+|> rowCount
+|> should 3
 
-match parseCommand "restrict (auction) (([reference]<>\"R005\") and not ([purchase_price]>5) or ([sell_price]<=12))" with
-| RestrictExpression r ->
-    evalRestrictExpression r
-    |> shouldOk
-    |> rowCount
-    |> should 5
-| _ ->
-    raiseToyRelException "Parsing result should be 'RestrictExpression'"
+testRestrictExpression "restrict (auction) (([reference]<>\"R005\") and not ([purchase_price]>5) or ([sell_price]<=12))"
+|> shouldOk
+|> rowCount
+|> should 5
 
 // Error
-match parseCommand "restrict (auction) ([purchase_price]>\"hoge\")" with
-| RestrictExpression r ->
-    evalRestrictExpression r
-    |> shouldError
-| _ ->
-    raiseToyRelException "Parsing result should be 'RestrictExpression'"
+testRestrictExpression "restrict (auction) ([purchase_price]>\"hoge\")"
+|> shouldError
 
-match parseCommand "restrict (auction) ([reference]=1)" with
-| RestrictExpression r ->
-    evalRestrictExpression r
-    |> shouldError
-| _ ->
-    raiseToyRelException "Parsing result should be 'RestrictExpression'"
+testRestrictExpression "restrict (auction) ([reference]=1)"
+|> shouldError
 
-match parseCommand "restrict (auction) ([purchase_price]=[reference])" with
-| RestrictExpression r ->
-    evalRestrictExpression r
-    |> shouldError
-| _ ->
-    raiseToyRelException "Parsing result should be 'RestrictExpression'"
+testRestrictExpression "restrict (auction) ([purchase_price]=[reference])"
+|> shouldError
 
-match parseCommand "restrict (auction) (1>[purchase_price])" with
-| RestrictExpression r ->
-    evalRestrictExpression r
-    |> shouldError
-| _ ->
-    raiseToyRelException "Parsing result should be 'RestrictExpression'"
+testRestrictExpression "restrict (auction) (1>[purchase_price])"
+|> shouldError
 
-match parseCommand "restrict (auction) (\"R005\"=[reference])" with
-| RestrictExpression r ->
-    evalRestrictExpression r
-    |> shouldError
-| _ ->
-    raiseToyRelException "Parsing result should be 'RestrictExpression'"
+testRestrictExpression "restrict (auction) (\"R005\"=[reference])"
+|> shouldError
 
-match parseCommand "restrict (auction) ([NOTHING]=\"R005\")" with
-| RestrictExpression r ->
-    evalRestrictExpression r
-    |> shouldError
-| _ ->
-    raiseToyRelException "Parsing result should be 'RestrictExpression'"
+testRestrictExpression "restrict (auction) ([NOTHING]=\"R005\")"
+|> shouldError
 
 changeDB (Identifier.Identifier "wikipedia")
 
@@ -217,8 +138,8 @@ match parseCommand "print Employee" with
 //
 // AssignStmt test
 //
-match parseCommand "hoge = (Employee)" with
-| AssignStmt a ->
+parseAssignStmt "hoge = (Employee)"
+|> fun a ->
     evalExpression a.Expression
     |> shouldOk
     |> columnCount
@@ -226,11 +147,9 @@ match parseCommand "hoge = (Employee)" with
 
     let (Identifier.Identifier rname) = a.Rname
     rname |> should "hoge"
-| _ ->
-    raiseToyRelException "Parsing result should be 'AssignStmt'"
 
-match parseCommand "fuga = project (Employee) Name, DeptName" with
-| AssignStmt a ->
+parseAssignStmt "fuga = project (Employee) Name, DeptName"
+|> fun a ->
     evalExpression a.Expression
     |> shouldOk
     |> columnCount
@@ -238,11 +157,9 @@ match parseCommand "fuga = project (Employee) Name, DeptName" with
 
     let (Identifier.Identifier rname) = a.Rname
     rname |> should "fuga"
-| _ ->
-    raiseToyRelException "Parsing result should be 'AssignStmt'"
 
-match parseCommand "r2 = (project (Employee) DeptName) difference (project (Dept) DeptName)" with
-| AssignStmt a ->
+parseAssignStmt "r2 = (project (Employee) DeptName) difference (project (Dept) DeptName)"
+|> fun a ->
     evalExpression a.Expression
     |> shouldOk
     |> rowCount
@@ -250,8 +167,6 @@ match parseCommand "r2 = (project (Employee) DeptName) difference (project (Dept
 
     let (Identifier.(*  *)Identifier rname) = a.Rname
     rname |> should "r2"
-| _ ->
-    raiseToyRelException "Parsing result should be 'AssignStmt'"
 
 parseCommandWithFailure "project = (Employee)"
 

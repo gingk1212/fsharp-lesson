@@ -40,18 +40,20 @@ let pBinOperand =
     <|> ((pchar '"' >>. pIdentifier .>> pchar '"') |>> Str)
     <|> ((pchar '[' >>. pColumn .>> pchar ']') |>> Column)
 
-let pCondAtomWithoutBracket =
+let pCondAtomWithoutParen =
     tuple3 pBinOperand pBinOp pBinOperand
 
-let pCondAtomWithBracket =
-    between (pchar '(') (pchar ')') pCondAtomWithoutBracket
+let pCondAtomWithParen =
+    between (pchar '(') (pchar ')') pCondAtomWithoutParen
 
 let pCondAtom =
     pipe2 (opt (spaces >>. pstring "not" >>. spaces) |>> Option.isSome)
-          (pCondAtomWithoutBracket <|> pCondAtomWithBracket)
+          (pCondAtomWithoutParen <|> pCondAtomWithParen)
           (fun isNot (bleft, binop, bright) ->
-              if isNot then { BinOperandL = bleft; BinOperandR = bright; BinOp = binop; Not = true }
-              else { BinOperandL = bleft; BinOperandR = bright; BinOp = binop; Not = false })
+              if isNot then
+                  CondAtom.CondAtomWithNot { BinOperandL = bleft; BinOperandR = bright; BinOp = binop }
+              else
+                  CondAtom.CondAtom { BinOperandL = bleft; BinOperandR = bright; BinOp = binop })
 
 let pCondition, pConditionRef = createParserForwardedToRef()
 
