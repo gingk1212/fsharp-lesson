@@ -16,25 +16,18 @@ type BinOperand =
     | Str of Identifier
     | Column of Column
 
-type CondAtomRecord =
+type CondAtom =
     { BinOperandL: BinOperand
       BinOperandR: BinOperand
-      BinOp: BinOp }
-
-type CondAtom =
-    | CondAtom of CondAtomRecord
-    | CondAtomWithNot of CondAtomRecord
+      BinOp: BinOp
+      Not: bool }
 
 type Condition =
-    | AndCond of AndCond
-    | OrCond of OrCond
+    | AndCond of CondAtomCond
+    | OrCond of CondAtomCond
     | CondAtom of CondAtom
 
-and AndCond =
-    { CondAtom: CondAtom
-      Condition: Condition }
-
-and OrCond =
+and CondAtomCond =
     { CondAtom: CondAtom
       Condition: Condition }
 

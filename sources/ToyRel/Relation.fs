@@ -1,6 +1,5 @@
 module Relation
 
-open System.Collections.Generic
 open Deedle
 open Common
 
@@ -13,17 +12,6 @@ let loadRelation (Identifier.Identifier name) =
     let csv = databaseDir + name + ".csv"
     try
         Result.Ok (Frame.ReadCsv csv |> fromFrame)
-    with
-        | err -> Result.Error err.Message
-
-let project columnList (Relation df) =
-    try
-        let strList = columnList |> List.map (fun column ->
-            match column with
-            | Column.Identifier (Identifier.Identifier id) -> id
-            | SBracketColumn sb -> sb
-        )
-        Result.Ok (df.Columns.[strList] |> fromFrame)
     with
         | err -> Result.Error err.Message
 
@@ -57,30 +45,19 @@ let isUnionComparable (Relation df1) (Relation df2) =
     if compKeys () <> 0 || compTypes () <> 0 then false
     else true
 
-let difference (Relation df1) (Relation df2) =
-    try
-        let df2Set = df2.RowsDense.Values |> Seq.toList |> HashSet
-        df1.RowsDense
-        |> Series.filterValues (fun row -> not (df2Set.Contains(row)))
-        |> Frame.ofRows
-        |> fromFrame
-        |> Result.Ok
-    with
-        | err -> Result.Error err.Message
-
-let private getColumnType col (Relation df) =
+let getColumnType col (Relation df) =
     let colName = getNameFromColumn col
     let colType = df.Columns.[[ colName ]].ColumnTypes |> Seq.toList
     colType.[0]
 
-let private checkColumnType tp col rel =
+let checkColumnType tp col rel =
     let colType = getColumnType col rel
     if colType = typeof<System.Object> then
         Result.Error (sprintf "No such column: %s" (getNameFromColumn col))
     else
         colType = tp |> Result.Ok
 
-let private isThetaComparable cond rel =
+let isThetaComparable cond rel =
     match cond.BinOperandL, cond.BinOperandR with
     | Int _, Int _ ->
         true |> Result.Ok
@@ -104,7 +81,7 @@ let private isThetaComparable cond rel =
         let colType = df.Columns.[[ colName ]].ColumnTypes |> Seq.toList
         checkColumnType colType.[0] colL rel
 
-let private filter fn row =
+let filter fn row =
     try
         row
         |> Series.filterValues fn
@@ -114,100 +91,90 @@ let private filter fn row =
     with
         | err -> Result.Error err.Message
 
-let private compareColumnAndLiteral<'T when 'T : comparison> binop colL right isNot (row: ObjectSeries<string>) =
-    let colLName = getNameFromColumn colL
-    let result = 
-        match binop with
-        | "<=" ->
-            row.GetAs<'T>(colLName) <= right
-        | "=" ->
-            row.GetAs<'T>(colLName) = right
-        | ">=" ->
-            row.GetAs<'T>(colLName) >= right
-        | "<>" ->
-            row.GetAs<'T>(colLName) <> right
-        | "<" ->
-            row.GetAs<'T>(colLName) < right
-        | ">" ->
-            row.GetAs<'T>(colLName) > right
-        | _ ->
-            failwithf "\"%s\" is not a binary operator." binop
-    if isNot then not result
-    else result
+let compare left right binop =
+    match binop with
+    | "<=" ->
+        left <= right
+    | "=" ->
+        left = right
+    | ">=" ->
+        left >= right
+    | "<>" ->
+        left <> right
+    | "<" ->
+        left < right
+    | ">" ->
+        left > right
+    | _ ->
+        failwithf "\"%s\" is not ac binary operator." binop
 
-let private compareColumns<'T when 'T : comparison> binop colL colR isNot (row: ObjectSeries<string>) =
-    let colRName = getNameFromColumn colR
-    let right = row.GetAs<'T>(colRName)
-    compareColumnAndLiteral binop colL right isNot row
+let compareColumnAndLiteral<'T when 'T : comparison> colL right condAtom =
+    let (BinOp binop) = condAtom.BinOp
+    fun (row: ObjectSeries<string>) ->
+        let left = row.GetAs<'T>(colL)
+        let result = compare left right binop
+        if condAtom.Not then not result
+        else result
 
-let restrict condAtom rel =
-    let (cond, isNot) =
-        match condAtom with
-        | CondAtom.CondAtom c ->
-            (c, false)
-        | CondAtom.CondAtomWithNot c -> 
-            (c, true)
+let compareColumns<'T when 'T : comparison> colL colR condAtom =
+    let (BinOp binop) = condAtom.BinOp
+    fun (row: ObjectSeries<string>) ->
+        let left = row.GetAs<'T>(colL)
+        let right = row.GetAs<'T>(colR)
+        let result = compare left right binop
+        if condAtom.Not then not result
+        else result
 
-    let doRestrict colL =
-        let (Relation df) = rel
-        let (BinOp binop) = cond.BinOp
-        match cond.BinOperandR with
+let genCondAtomFunc condAtom rel =
+    let genFunc colL =
+        let colLName = getNameFromColumn colL
+        match condAtom.BinOperandR with
         | Int intR ->
-            df.RowsDense
-            |> filter (compareColumnAndLiteral binop colL intR isNot)
+            compareColumnAndLiteral colLName intR condAtom |> Result.Ok
         | Str (Identifier.Identifier strR) ->
-            df.RowsDense
-            |> filter (compareColumnAndLiteral binop colL strR isNot)
+            compareColumnAndLiteral colLName strR condAtom |> Result.Ok
         | Column colR ->
-            match getColumnType colL rel with
-            | t when t = typeof<int> ->
-                df.RowsDense
-                |> filter (compareColumns<int> binop colL colR isNot)
-            | t when t = typeof<string> ->
-                df.RowsDense
-                |> filter (compareColumns<string> binop colL colR isNot)
-            | t ->
-                Result.Error (sprintf "Invalid column type: %A" t)
+            let colRName = getNameFromColumn colR
+            compareColumns colLName colRName condAtom |> Result.Ok
 
-    match cond.BinOperandL with
+    match condAtom.BinOperandL with
     | Int _ | Str _ ->
         Result.Error "The left side of the condition expression must be column name."
     | Column colL ->
-        match isThetaComparable cond rel with
+        match isThetaComparable condAtom rel with
         | Result.Ok ok when ok = true ->
-            doRestrict colL
+            genFunc colL
         | Result.Ok _ ->
             Result.Error "Relations are not theta-comparable."
         | Result.Error err ->
             Result.Error err
 
+type AndOr =
+    | And
+    | Or
 
-let binOpAnd relL relR =
-    if isUnionComparable relL relR then
-        try
-            let (Relation dfL) = relL
-            let (Relation dfR) = relR
-            let dfRSet = dfR.RowsDense.Values |> Seq.toList |> HashSet
+let genNewCondFunc lastFunc lastAndOr condAtomFunc =
+    match lastAndOr with
+    | And ->
+        fun row -> lastFunc row && condAtomFunc row
+    | Or ->
+        fun row -> lastFunc row || condAtomFunc row
 
-            dfL.RowsDense
-            |> filter (fun row -> dfRSet.Contains(row))
-        with
-            | err -> Result.Error err.Message
-    else
-        Result.Error "Relations are not union comparable."
-
-let binOpOr relL relR =
-    if isUnionComparable relL relR then
-        try
-            let (Relation dfL) = relL
-            let (Relation dfR) = relR
-
-            Seq.append dfL.RowsDense.Values dfR.RowsDense.Values
-            |> Series.ofValues
-            |> Frame.ofRows
-            |> fromFrame
-            |> Result.Ok
-        with
-            | err -> Result.Error err.Message
-    else
-        Result.Error "Relations are not union comparable."
+let rec genCondFunc lastFunc lastAndOr rightCond rel =
+    match rightCond with
+    | AndCond ac ->
+        genCondAtomFunc ac.CondAtom rel
+        |> Result.bind (fun condAtomFunc ->
+            let newCondFunc =
+                genNewCondFunc lastFunc lastAndOr condAtomFunc
+            genCondFunc newCondFunc And ac.Condition rel)
+    | OrCond oc ->
+        genCondAtomFunc oc.CondAtom rel
+        |> Result.bind (fun condAtomFunc ->
+            let newCondFunc =
+                genNewCondFunc lastFunc lastAndOr condAtomFunc
+            genCondFunc newCondFunc Or oc.Condition rel)
+    | CondAtom ca ->
+        genCondAtomFunc ca rel
+        |> Result.map (fun condAtomFunc ->
+            genNewCondFunc lastFunc lastAndOr condAtomFunc)

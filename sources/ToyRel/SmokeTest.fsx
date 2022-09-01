@@ -7,6 +7,9 @@ open Common
 #load "Relation.fs"
 open Relation
 
+#load "RelationOp.fs"
+open RelationOp
+
 #load "Eval.fs"
 open Eval
 
@@ -81,7 +84,7 @@ testRestrictExpression "restrict (auction) (([reference]<>\"R005\") and ([purcha
 testRestrictExpression "restrict (auction) (([reference]<>\"R005\") and ([purchase_price]>5) or ([sell_price]<=12))"
 |> shouldOk
 |> rowCount
-|> should 4
+|> should 5
 
 testRestrictExpression "restrict (auction) (not [sell_price]>[purchase_price])"
 |> shouldOk
@@ -101,7 +104,7 @@ testRestrictExpression "restrict (auction) (([reference]<>\"R005\") and not ([pu
 testRestrictExpression "restrict (auction) (([reference]<>\"R005\") and not ([purchase_price]>5) or ([sell_price]<=12))"
 |> shouldOk
 |> rowCount
-|> should 5
+|> should 6
 
 // Error
 testRestrictExpression "restrict (auction) ([purchase_price]>\"hoge\")"

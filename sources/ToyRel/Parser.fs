@@ -51,19 +51,19 @@ let pCondAtom =
           (pCondAtomWithoutParen <|> pCondAtomWithParen)
           (fun isNot (bleft, binop, bright) ->
               if isNot then
-                  CondAtom.CondAtomWithNot { BinOperandL = bleft; BinOperandR = bright; BinOp = binop }
+                  { BinOperandL = bleft; BinOperandR = bright; BinOp = binop; Not = true }
               else
-                  CondAtom.CondAtom { BinOperandL = bleft; BinOperandR = bright; BinOp = binop })
+                  { BinOperandL = bleft; BinOperandR = bright; BinOp = binop; Not = false })
 
 let pCondition, pConditionRef = createParserForwardedToRef()
 
 let pAndCond =
     pipe2 pCondAtom (spaces >>. pstring "and" >>. spaces >>. pCondition)
-          (fun condAtom cond -> AndCond { AndCond.CondAtom = condAtom; AndCond.Condition = cond })
+          (fun condAtom cond -> AndCond { CondAtom = condAtom; Condition = cond })
 
 let pOrCond =
     pipe2 pCondAtom (spaces >>. pstring "or" >>. spaces >>. pCondition)
-          (fun condAtom cond -> OrCond { OrCond.CondAtom = condAtom; OrCond.Condition = cond })
+          (fun condAtom cond -> OrCond { CondAtom = condAtom; Condition = cond })
 
 pConditionRef.Value <-
     attempt(pAndCond)

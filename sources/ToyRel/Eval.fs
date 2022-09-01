@@ -3,31 +3,7 @@ module Eval
 open System.IO
 open Common
 open Relation
-
-// Condition evaluator
-let evalCondAtom condAtom rel =
-    restrict condAtom rel
-
-let rec evalCondition cond rel =
-    match cond with
-    | AndCond ac -> evalAndCond ac rel
-    | OrCond oc -> evalOrCond oc rel
-    | CondAtom ca -> evalCondAtom ca rel
-
-and evalAndCond cond rel =
-    evalCondAtom cond.CondAtom rel
-    |> Result.bind (fun relL ->
-        evalCondition cond.Condition rel
-        |> Result.bind (fun relR ->
-            binOpAnd relL relR))
-
-and evalOrCond cond rel =
-    evalCondAtom cond.CondAtom rel
-    |> Result.bind (fun relL ->
-        evalCondition cond.Condition rel
-        |> Result.bind (fun relR ->
-            binOpOr relL relR))
-
+open RelationOp
 
 // Expression evaluator
 let rec evalExpression expression =
@@ -53,7 +29,7 @@ and evalDifferenceExpression diffExp =
 
 and evalRestrictExpression restrictExp =
     evalExpression restrictExp.Expression
-    |> Result.bind (evalCondition restrictExp.Condition)
+    |> Result.bind (restrict restrictExp.Condition)
 
 
 // Statement evaluator
