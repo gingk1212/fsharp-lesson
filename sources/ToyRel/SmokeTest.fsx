@@ -106,6 +106,16 @@ testRestrictExpression "restrict (auction) (([reference]<>\"R005\") and not ([pu
 |> rowCount
 |> should 6
 
+testRestrictExpression "restrict (auction) (5>[purchase_price])"
+|> shouldOk
+|> rowCount
+|> should 3
+
+testRestrictExpression "restrict (auction) (\"R005\"=[reference])"
+|> shouldOk
+|> rowCount
+|> should 1
+
 // Error
 testRestrictExpression "restrict (auction) ([purchase_price]>\"hoge\")"
 |> shouldError
@@ -116,14 +126,10 @@ testRestrictExpression "restrict (auction) ([reference]=1)"
 testRestrictExpression "restrict (auction) ([purchase_price]=[reference])"
 |> shouldError
 
-testRestrictExpression "restrict (auction) (1>[purchase_price])"
-|> shouldError
-
-testRestrictExpression "restrict (auction) (\"R005\"=[reference])"
-|> shouldError
-
 testRestrictExpression "restrict (auction) ([NOTHING]=\"R005\")"
 |> shouldError
+
+parseCommandWithFailure "restrict (auction) ([purchase_price]=0.5)"
 
 changeDB (Identifier.Identifier "wikipedia")
 

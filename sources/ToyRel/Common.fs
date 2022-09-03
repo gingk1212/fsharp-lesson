@@ -9,11 +9,15 @@ type Column =
     | Identifier of Identifier
     | SBracketColumn of string
 
+type ColumnType =
+    | Int of int
+    | Str of string
+    | Invalid
+
 type BinOp = BinOp of string
 
 type BinOperand =
-    | Int of int
-    | Str of Identifier
+    | Primitive of ColumnType
     | Column of Column
 
 type CondAtom =
@@ -22,17 +26,17 @@ type CondAtom =
       BinOp: BinOp
       Not: bool }
 
-type AndOr =
+type BoolOp =
     | And
     | Or
 
 type Condition =
-    | CondAtomCond of CondAtomCond
+    | Conditions of Conditions
     | CondAtom of CondAtom
 
-and CondAtomCond =
+and Conditions =
     { CondAtom: CondAtom
-      AndOr: AndOr
+      BoolOp: BoolOp
       Condition: Condition }
 
 type Expression =

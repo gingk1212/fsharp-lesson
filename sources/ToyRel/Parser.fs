@@ -36,17 +36,19 @@ let pBinOp =
                <|> (pstring ">") .>> spaces |>> BinOp
 
 let pBinOperand =
-    (regex ("[0-9]+") |>> int |>> Int)
-    <|> ((pchar '"' >>. pIdentifier .>> pchar '"') |>> Str)
+    let normalChar = satisfy (fun c -> c <> '"')
+
+    (regex ("[0-9]+") |>> int |>> Int |>> Primitive)
+    <|> ((pchar '"' >>. (manyChars normalChar) .>> pchar '"') |>> Str |>> Primitive)
     <|> ((pchar '[' >>. pColumn .>> pchar ']') |>> Column)
 
-let pCondAtomWithoutParen =
-    tuple3 pBinOperand pBinOp pBinOperand
-
-let pCondAtomWithParen =
-    between (pchar '(') (pchar ')') pCondAtomWithoutParen
-
 let pCondAtom =
+    let pCondAtomWithoutParen =
+        tuple3 pBinOperand pBinOp pBinOperand
+
+    let pCondAtomWithParen =
+        between (pchar '(') (pchar ')') pCondAtomWithoutParen
+
     pipe2 (opt (spaces >>. pstring "not" >>. spaces) |>> Option.isSome)
           (pCondAtomWithoutParen <|> pCondAtomWithParen)
           (fun isNot (bleft, binop, bright) ->
@@ -57,15 +59,15 @@ let pCondAtom =
 
 let pCondition, pConditionRef = createParserForwardedToRef()
 
-let pAndOrCond =
+let pConditions =
     pipe3 pCondAtom (spaces >>. (pstring "and" <|> pstring "or")) (spaces >>. pCondition)
-          (fun condAtom andor cond ->
-               match andor with
-               | "and" -> CondAtomCond { CondAtom = condAtom; AndOr = And; Condition = cond }
-               | "or" | _ -> CondAtomCond { CondAtom = condAtom; AndOr = Or; Condition = cond })
+          (fun condAtom boolop cond ->
+               match boolop with
+               | "and" -> Conditions { CondAtom = condAtom; BoolOp = And; Condition = cond }
+               | "or" | _ -> Conditions { CondAtom = condAtom; BoolOp = Or; Condition = cond })
 
 pConditionRef.Value <-
-    attempt(pAndOrCond)
+    attempt(pConditions)
     <|> (pCondAtom |>> CondAtom)
 
 

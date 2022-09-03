@@ -15,21 +15,21 @@ let rec evalExpression expression =
 
 and evalProjectExpression projExp =
     evalExpression projExp.Expression
-    |> Result.bind (project projExp.ColumnList)
+    |> Result.bind (projectOp projExp.ColumnList)
 
 and evalDifferenceExpression diffExp =
     evalExpression diffExp.Expression1
     |> Result.bind (fun rel1 ->
         evalExpression diffExp.Expression2
         |> Result.bind (fun rel2 ->
-            if isUnionComparable rel1 rel2 then
-                difference rel1 rel2
+            if isUnionCompatible rel1 rel2 then
+                differenceOp rel1 rel2
             else
-                Result.Error "Relations are not union comparable."))
+                Result.Error "Relations are not union compatible."))
 
 and evalRestrictExpression restrictExp =
     evalExpression restrictExp.Expression
-    |> Result.bind (restrict restrictExp.Condition)
+    |> Result.bind (restrictOp restrictExp.Condition)
 
 
 // Statement evaluator
