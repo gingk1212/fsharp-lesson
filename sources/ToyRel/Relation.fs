@@ -149,10 +149,6 @@ let genCondAtomFunc condAtom rel =
         | Result.Error err ->
             Result.Error err
 
-type AndOr =
-    | And
-    | Or
-
 let genNewCondFunc lastFunc lastAndOr condAtomFunc =
     match lastAndOr with
     | And ->
@@ -162,18 +158,12 @@ let genNewCondFunc lastFunc lastAndOr condAtomFunc =
 
 let rec genCondFunc lastFunc lastAndOr rightCond rel =
     match rightCond with
-    | AndCond ac ->
-        genCondAtomFunc ac.CondAtom rel
+    | CondAtomCond cac ->
+        genCondAtomFunc cac.CondAtom rel
         |> Result.bind (fun condAtomFunc ->
             let newCondFunc =
                 genNewCondFunc lastFunc lastAndOr condAtomFunc
-            genCondFunc newCondFunc And ac.Condition rel)
-    | OrCond oc ->
-        genCondAtomFunc oc.CondAtom rel
-        |> Result.bind (fun condAtomFunc ->
-            let newCondFunc =
-                genNewCondFunc lastFunc lastAndOr condAtomFunc
-            genCondFunc newCondFunc Or oc.Condition rel)
+            genCondFunc newCondFunc cac.AndOr cac.Condition rel)
     | CondAtom ca ->
         genCondAtomFunc ca rel
         |> Result.map (fun condAtomFunc ->

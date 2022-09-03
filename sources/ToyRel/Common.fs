@@ -22,13 +22,17 @@ type CondAtom =
       BinOp: BinOp
       Not: bool }
 
+type AndOr =
+    | And
+    | Or
+
 type Condition =
-    | AndCond of CondAtomCond
-    | OrCond of CondAtomCond
+    | CondAtomCond of CondAtomCond
     | CondAtom of CondAtom
 
 and CondAtomCond =
     { CondAtom: CondAtom
+      AndOr: AndOr
       Condition: Condition }
 
 type Expression =

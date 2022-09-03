@@ -57,17 +57,15 @@ let pCondAtom =
 
 let pCondition, pConditionRef = createParserForwardedToRef()
 
-let pAndCond =
-    pipe2 pCondAtom (spaces >>. pstring "and" >>. spaces >>. pCondition)
-          (fun condAtom cond -> AndCond { CondAtom = condAtom; Condition = cond })
-
-let pOrCond =
-    pipe2 pCondAtom (spaces >>. pstring "or" >>. spaces >>. pCondition)
-          (fun condAtom cond -> OrCond { CondAtom = condAtom; Condition = cond })
+let pAndOrCond =
+    pipe3 pCondAtom (spaces >>. (pstring "and" <|> pstring "or")) (spaces >>. pCondition)
+          (fun condAtom andor cond ->
+               match andor with
+               | "and" -> CondAtomCond { CondAtom = condAtom; AndOr = And; Condition = cond }
+               | "or" | _ -> CondAtomCond { CondAtom = condAtom; AndOr = Or; Condition = cond })
 
 pConditionRef.Value <-
-    attempt(pAndCond)
-    <|> attempt(pOrCond)
+    attempt(pAndOrCond)
     <|> (pCondAtom |>> CondAtom)
 
 
