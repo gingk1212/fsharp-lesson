@@ -1,6 +1,6 @@
 ﻿open System
 open FParsec
-open RadLine
+open ReCJKLine
 open Common
 open Relation
 open Eval
@@ -66,13 +66,10 @@ let execute command =
 
 [<EntryPoint>]
 let main _ =
-    let lineEditor = LineEditor()
-    lineEditor.Prompt <- LineEditorPrompt(">", ".")
-    lineEditor.KeyBindings.Add<PreviousHistoryCommand>(ConsoleKey.P, ConsoleModifiers.Control)
-    lineEditor.KeyBindings.Add<NextHistoryCommand>(ConsoleKey.N, ConsoleModifiers.Control)
+    let recjk = new ReCJKLine()
 
     let rec repl () =
-        let command = lineEditor.ReadLine(Threading.CancellationToken.None).Result
+        let command = recjk.ReadLine("> ")
         execute command
         repl ()
 
