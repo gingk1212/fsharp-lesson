@@ -18,14 +18,18 @@ and evalProjectExpression projExp =
     |> Result.bind (projectOp projExp.ColumnList)
 
 and evalDifferenceExpression diffExp =
-    evalExpression diffExp.Expression1
-    |> Result.bind (fun rel1 ->
-        evalExpression diffExp.Expression2
-        |> Result.bind (fun rel2 ->
-            if isUnionCompatible rel1 rel2 then
-                differenceOp rel1 rel2
-            else
-                Result.Error "Relations are not union compatible."))
+    let diff rel1 rel2 = 
+        if isUnionCompatible rel1 rel2 then
+            differenceOp rel1 rel2
+        else
+            Result.Error "Relations are not union compatible."
+
+    result {
+        let! rel1 = evalExpression diffExp.Expression1
+        let! rel2 = evalExpression diffExp.Expression2
+        let! c = diff rel1 rel2
+        return c
+    }
 
 and evalRestrictExpression restrictExp =
     evalExpression restrictExp.Expression

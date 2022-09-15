@@ -94,3 +94,9 @@ let getNameFromColumn col =
     match col with
     | Column.Identifier (Identifier.Identifier i) -> i
     | Column.SBracketColumn s -> s
+
+type ResultBuilder() =
+    member this.Bind(m, f) = Result.bind f m
+    member this.Return(x) = Result.Ok x
+
+let result = new ResultBuilder()
