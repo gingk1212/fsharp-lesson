@@ -152,11 +152,11 @@ let rec condToFunc cond lastFunc lastLogicalOp rel =
             fun row -> lastFunc row || condAtomFunc row
 
     match cond with
-    | LogicalOperation logicalOpn ->
-        condAtomToFunc logicalOpn.CondAtom rel
+    | LogicalExpression logicalExp ->
+        condAtomToFunc logicalExp.CondAtom rel
         |> Result.bind (fun condAtomFunc ->
             let condFunc = joinConds condAtomFunc
-            condToFunc logicalOpn.Condition condFunc logicalOpn.LogicalOp rel)
+            condToFunc logicalExp.Condition condFunc logicalExp.LogicalOp rel)
     | CondAtom ca ->
         condAtomToFunc ca rel
         |> Result.map (fun condAtomFunc ->

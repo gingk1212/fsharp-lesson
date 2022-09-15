@@ -59,15 +59,15 @@ let pCondAtom =
 
 let pCondition, pConditionRef = createParserForwardedToRef()
 
-let pLogicalOperation =
+let pLogicalExpression =
     pipe3 pCondAtom (spaces >>. ((pstring "and" >>% And) <|> (pstring "or" >>% Or))) (spaces >>. pCondition)
           (fun condAtom logicalOp cond ->
                match logicalOp with
-               | And -> LogicalOperation { CondAtom = condAtom; LogicalOp = And; Condition = cond }
-               | Or -> LogicalOperation { CondAtom = condAtom; LogicalOp = Or; Condition = cond })
+               | And -> LogicalExpression { CondAtom = condAtom; LogicalOp = And; Condition = cond }
+               | Or -> LogicalExpression { CondAtom = condAtom; LogicalOp = Or; Condition = cond })
 
 pConditionRef.Value <-
-    attempt(pLogicalOperation)
+    attempt(pLogicalExpression)
     <|> (pCondAtom |>> CondAtom)
 
 

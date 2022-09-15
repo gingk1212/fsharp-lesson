@@ -31,10 +31,10 @@ type LogicalOp =
     | Or
 
 type Condition =
-    | LogicalOperation of LogicalOperation
+    | LogicalExpression of LogicalExpression
     | CondAtom of CondAtom
 
-and LogicalOperation =
+and LogicalExpression =
     { CondAtom: CondAtom
       LogicalOp: LogicalOp
       Condition: Condition }
