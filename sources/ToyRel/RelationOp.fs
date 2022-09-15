@@ -143,20 +143,20 @@ let condAtomToFunc condAtom rel =
         Result.Error "Relations are not theta-comparable."
 
 
-let rec condToFunc cond lastFunc lastBoolOp rel =
+let rec condToFunc cond lastFunc lastLogicalOp rel =
     let joinConds condAtomFunc =
-        match lastBoolOp with
+        match lastLogicalOp with
         | And ->
             fun row -> lastFunc row && condAtomFunc row
         | Or ->
             fun row -> lastFunc row || condAtomFunc row
 
     match cond with
-    | Conditions conds ->
-        condAtomToFunc conds.CondAtom rel
+    | LogicalOperation logicalOpn ->
+        condAtomToFunc logicalOpn.CondAtom rel
         |> Result.bind (fun condAtomFunc ->
             let condFunc = joinConds condAtomFunc
-            condToFunc conds.Condition condFunc conds.BoolOp rel)
+            condToFunc logicalOpn.Condition condFunc logicalOpn.LogicalOp rel)
     | CondAtom ca ->
         condAtomToFunc ca rel
         |> Result.map (fun condAtomFunc ->

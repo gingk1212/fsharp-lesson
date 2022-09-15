@@ -26,17 +26,17 @@ type CondAtom =
       BinOp: BinOp
       Not: bool }
 
-type BoolOp =
+type LogicalOp =
     | And
     | Or
 
 type Condition =
-    | Conditions of Conditions
+    | LogicalOperation of LogicalOperation
     | CondAtom of CondAtom
 
-and Conditions =
+and LogicalOperation =
     { CondAtom: CondAtom
-      BoolOp: BoolOp
+      LogicalOp: LogicalOp
       Condition: Condition }
 
 type Expression =
