@@ -53,9 +53,9 @@ let pCondAtom =
           (pCondAtomWithoutParen <|> pCondAtomWithParen)
           (fun isNot (bleft, binop, bright) ->
               if isNot then
-                  { BinOperandL = bleft; BinOperandR = bright; BinOp = binop; Not = true }
+                  CondAtomType.CondAtomWithNot { BinOperandL = bleft; BinOperandR = bright; BinOp = binop }
               else
-                  { BinOperandL = bleft; BinOperandR = bright; BinOp = binop; Not = false })
+                  CondAtomType.CondAtom { BinOperandL = bleft; BinOperandR = bright; BinOp = binop })
 
 let pCondition, pConditionRef = createParserForwardedToRef()
 

@@ -23,8 +23,11 @@ type BinOperand =
 type CondAtom =
     { BinOperandL: BinOperand
       BinOperandR: BinOperand
-      BinOp: BinOp
-      Not: bool }
+      BinOp: BinOp }
+
+type CondAtomType =
+    | CondAtom of CondAtom
+    | CondAtomWithNot of CondAtom
 
 type LogicalOp =
     | And
@@ -32,10 +35,10 @@ type LogicalOp =
 
 type Condition =
     | LogicalExpression of LogicalExpression
-    | CondAtom of CondAtom
+    | CondAtom of CondAtomType
 
 and LogicalExpression =
-    { CondAtom: CondAtom
+    { CondAtom: CondAtomType
       LogicalOp: LogicalOp
       Condition: Condition }
 

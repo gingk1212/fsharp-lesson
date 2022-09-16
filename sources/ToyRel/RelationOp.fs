@@ -80,27 +80,21 @@ let isThetaComparable binOperandL binOperandR rel =
 let condAtomToFunc condAtom rel =
     let compare left right =
         let (BinOp binop) = condAtom.BinOp
-        let result =
-            match binop with
-            | "<=" ->
-                left <= right
-            | "=" ->
-                left = right
-            | ">=" ->
-                left >= right
-            | "<>" ->
-                left <> right
-            | "<" ->
-                left < right
-            | ">" ->
-                left > right
-            | _ ->
-                failwithf "\"%sValue\" is not a binary operator." binop
-
-        if condAtom.Not then
-            not result
-        else
-            result
+        match binop with
+        | "<=" ->
+            left <= right
+        | "=" ->
+            left = right
+        | ">=" ->
+            left >= right
+        | "<>" ->
+            left <> right
+        | "<" ->
+            left < right
+        | ">" ->
+            left > right
+        | _ ->
+            failwithf "\"%sValue\" is not a binary operator." binop
 
     if isThetaComparable condAtom.BinOperandL condAtom.BinOperandR rel then
         let func row =
@@ -138,9 +132,19 @@ let condAtomToFunc condAtom rel =
                     getNameFromColumn colR |> getColumnValue row 
                 compare colLValue colRValue
 
-        Result.Ok (func)
+        Result.Ok func
     else
         Result.Error "Relations are not theta-comparable."
+
+
+let condAtomTypeToFunc condAtom rel =
+    match condAtom with
+    | CondAtomType.CondAtom condAtom ->
+        condAtomToFunc condAtom rel
+    | CondAtomType.CondAtomWithNot condAtomWithNot ->
+        condAtomToFunc condAtomWithNot rel
+        |> Result.map (fun condAtomFunc ->
+            fun row -> not (condAtomFunc row))
 
 
 let rec condToFunc cond lastFunc lastLogicalOp rel =
@@ -153,12 +157,12 @@ let rec condToFunc cond lastFunc lastLogicalOp rel =
 
     match cond with
     | LogicalExpression logicalExp ->
-        condAtomToFunc logicalExp.CondAtom rel
+        condAtomTypeToFunc logicalExp.CondAtom rel
         |> Result.bind (fun condAtomFunc ->
             let condFunc = joinConds condAtomFunc
             condToFunc logicalExp.Condition condFunc logicalExp.LogicalOp rel)
-    | CondAtom ca ->
-        condAtomToFunc ca rel
+    | CondAtom condAtom ->
+        condAtomTypeToFunc condAtom rel
         |> Result.map (fun condAtomFunc ->
             joinConds condAtomFunc)
 
