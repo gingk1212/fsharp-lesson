@@ -86,15 +86,15 @@ testRestrictExpression "restrict (auction) (([reference]<>\"R005\") and ([purcha
 |> rowCount
 |> should 5
 
-testRestrictExpression "restrict (auction) (not [sell_price]>[purchase_price])"
+testRestrictExpression "restrict (auction) (not ([sell_price]=[purchase_price]))"
 |> shouldOk
 |> rowCount
-|> should 3
+|> should 6
 
-testRestrictExpression "restrict (auction) (not ([sell_price]>[purchase_price]))"
+testRestrictExpression "restrict (auction) (not (not ([sell_price]=[purchase_price])))"
 |> shouldOk
 |> rowCount
-|> should 3
+|> should 0
 
 testRestrictExpression "restrict (auction) (([reference]<>\"R005\") and not ([purchase_price]>5))"
 |> shouldOk

@@ -43,32 +43,34 @@ let pBinOperand =
     <|> ((pchar '[' >>. pColumn .>> pchar ']') |>> Column)
 
 let pCondAtom =
-    let pCondAtomWithoutParen =
+    let pWithoutParen =
         tuple3 pBinOperand pBinOp pBinOperand
 
-    let pCondAtomWithParen =
-        between (pchar '(') (pchar ')') pCondAtomWithoutParen
+    let pWithParen =
+        between (pchar '(') (pchar ')') pWithoutParen
 
-    pipe2 (opt (spaces >>. pstring "not" >>. spaces) |>> Option.isSome)
-          (pCondAtomWithoutParen <|> pCondAtomWithParen)
-          (fun isNot (bleft, binop, bright) ->
-              if isNot then
-                  CondAtomType.CondAtomWithNot { BinOperandL = bleft; BinOperandR = bright; BinOp = binop }
-              else
-                  CondAtomType.CondAtom { BinOperandL = bleft; BinOperandR = bright; BinOp = binop })
+    pWithoutParen <|> pWithParen
+    |>> (fun (bleft, binop, bright) ->
+            CondAtom { BinOperandL = bleft; BinOperandR = bright; BinOp = binop })
+
+let pSingleCondition, pSingleConditionRef = createParserForwardedToRef()
+
+pSingleConditionRef.Value <-
+    (pstring "not" >>. spaces >>. (between (pchar '(') (pchar ')') pSingleCondition) |>> Negation)
+    <|> pCondAtom
 
 let pCondition, pConditionRef = createParserForwardedToRef()
 
-let pLogicalExpression =
-    pipe3 pCondAtom (spaces >>. ((pstring "and" >>% And) <|> (pstring "or" >>% Or))) (spaces >>. pCondition)
-          (fun condAtom logicalOp cond ->
-               match logicalOp with
-               | And -> LogicalExpression { CondAtom = condAtom; LogicalOp = And; Condition = cond }
-               | Or -> LogicalExpression { CondAtom = condAtom; LogicalOp = Or; Condition = cond })
+let pInfixCondition =
+    pipe3 (pSingleCondition .>> spaces)
+          ((pstring "or" >>% Or) <|> (pstring "and" >>% And))
+          (spaces >>. pCondition)
+          (fun singleCond logicalOp cond ->
+               InfixCondition { SingleCondition = singleCond; LogicalOp = logicalOp; Condition = cond })
 
 pConditionRef.Value <-
-    attempt(pLogicalExpression)
-    <|> (pCondAtom |>> CondAtom)
+    attempt(pInfixCondition)
+    <|> (pSingleCondition |>> SingleCondition)
 
 
 // Expression parser
@@ -86,7 +88,8 @@ let pDifferenceExpression =
           (fun e1 e2 -> { Expression1 = e1; Expression2 = e2 })
 
 let pRestrictExpression =
-    pipe2 (pstring "restrict" >>. spaces >>. pExprInExpr .>> spaces) (pchar '(' >>. pCondition .>> pchar ')')
+    pipe2 (pstring "restrict" >>. spaces >>. pExprInExpr .>> spaces)
+          (pchar '(' >>. pCondition .>> pchar ')')
           (fun e c -> { Expression = e; Condition = c })
 
 // Since it is difficult to distinguish whether the right-hand sides of the

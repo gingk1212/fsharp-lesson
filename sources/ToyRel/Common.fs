@@ -25,20 +25,20 @@ type CondAtom =
       BinOperandR: BinOperand
       BinOp: BinOp }
 
-type CondAtomType =
+type SingleCondition =
+    | Negation of SingleCondition
     | CondAtom of CondAtom
-    | CondAtomWithNot of CondAtom
 
 type LogicalOp =
     | And
     | Or
 
 type Condition =
-    | LogicalExpression of LogicalExpression
-    | CondAtom of CondAtomType
+    | InfixCondition of InfixCondition
+    | SingleCondition of SingleCondition
 
-and LogicalExpression =
-    { CondAtom: CondAtomType
+and InfixCondition =
+    { SingleCondition: SingleCondition
       LogicalOp: LogicalOp
       Condition: Condition }
 

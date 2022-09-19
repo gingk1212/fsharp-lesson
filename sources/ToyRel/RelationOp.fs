@@ -137,34 +137,37 @@ let condAtomToFunc condAtom rel =
         Result.Error "Relations are not theta-comparable."
 
 
-let condAtomTypeToFunc condAtom rel =
-    match condAtom with
-    | CondAtomType.CondAtom condAtom ->
+let rec singleCondToFunc singleCond inv rel =
+    match singleCond with
+    | Negation negation ->
+        singleCondToFunc negation (not inv) rel
+    | CondAtom condAtom ->
         condAtomToFunc condAtom rel
-    | CondAtomType.CondAtomWithNot condAtomWithNot ->
-        condAtomToFunc condAtomWithNot rel
         |> Result.map (fun condAtomFunc ->
-            fun row -> not (condAtomFunc row))
+            if inv then
+                fun row -> not (condAtomFunc row)
+            else
+                condAtomFunc)
 
 
 let rec condToFunc cond lastFunc lastLogicalOp rel =
-    let joinConds condAtomFunc =
+    let joinConds func =
         match lastLogicalOp with
         | And ->
-            fun row -> lastFunc row && condAtomFunc row
+            fun row -> lastFunc row && func row
         | Or ->
-            fun row -> lastFunc row || condAtomFunc row
+            fun row -> lastFunc row || func row
 
     match cond with
-    | LogicalExpression logicalExp ->
-        condAtomTypeToFunc logicalExp.CondAtom rel
-        |> Result.bind (fun condAtomFunc ->
-            let condFunc = joinConds condAtomFunc
-            condToFunc logicalExp.Condition condFunc logicalExp.LogicalOp rel)
-    | CondAtom condAtom ->
-        condAtomTypeToFunc condAtom rel
-        |> Result.map (fun condAtomFunc ->
-            joinConds condAtomFunc)
+    | InfixCondition infixCond ->
+        singleCondToFunc infixCond.SingleCondition false rel
+        |> Result.bind (fun func ->
+            let condFunc = joinConds func
+            condToFunc infixCond.Condition condFunc infixCond.LogicalOp rel)
+    | SingleCondition singleCond ->
+        singleCondToFunc singleCond false rel
+        |> Result.map (fun func ->
+            joinConds func)
 
 
 let restrictOp cond rel =
