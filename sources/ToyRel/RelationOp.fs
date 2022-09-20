@@ -137,6 +137,8 @@ let condAtomToFunc condAtom rel =
         Result.Error "Relations are not theta-comparable."
 
 
+// This function works recursively because the restrict expression supports the
+// nesting of "not".
 let rec singleCondToFunc singleCond inv rel =
     match singleCond with
     | Negation negation ->
@@ -150,6 +152,15 @@ let rec singleCondToFunc singleCond inv rel =
                 condAtomFunc)
 
 
+// Convert Condition of the restrict expression into a function passed to
+// Relation.filter.
+// When the condition's type is an infix, it is processed recursively. lastFunc
+// and lastLogicalOp is required in the recursive process. lastFunc is a
+// function that has already been converted. lastLogicalOp is And/Or operator
+// that combines lastFunc and CondAtom which is converted to a function in that
+// time.
+// For example, the condition "([hoge]<>3) and ([fuga]>5) or ([bar]<=12)" is
+// converted into the function `func row -> row <> 3 && row > 5 || row <= 12`.
 let rec condToFunc cond lastFunc lastLogicalOp rel =
     let joinConds func =
         match lastLogicalOp with
