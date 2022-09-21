@@ -65,10 +65,16 @@ let testRestrictExpression cmd =
     | _ ->
         raiseToyRelException "Parsing result should be 'RestrictExpression'"
 
+let testProductExpression cmd =
+    match parseCommand cmd with
+    | ProductExpression p ->
+        evalProductExpression p
+    | _ ->
+        raiseToyRelException "Parsing result should be 'ProductExpression'"
+
 let parseAssignStmt cmd =
     match parseCommand cmd with
     | AssignStmt a ->
         a
     | _ ->
         raiseToyRelException "Parsing result should be 'AssignStmt'"
-

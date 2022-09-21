@@ -135,6 +135,30 @@ changeDB (Identifier.Identifier "wikipedia")
 
 
 //
+// ProductExpression test
+//
+testProductExpression "(Employee) product (Dept)"
+|> shouldOk
+|> rowCount
+|> should 15
+
+testProductExpression "(Employee) product (Dept)"
+|> shouldOk
+|> columnCount
+|> should 5
+
+testProductExpression "(Employee) product (project (Dept) DeptName)"
+|> shouldOk
+|> rowCount
+|> should 15
+
+testProductExpression "(project (Employee) Name, EmpId) product (Dept)"
+|> shouldOk
+|> rowCount
+|> should 15
+
+
+//
 // PrintStmt test
 //
 match parseCommand "print Employee" with

@@ -52,6 +52,18 @@ let differenceOp rel1 rel2 =
         | err -> Result.Error err.Message
 
 
+let productOp relL relR prefix =
+    let setL = columnKeys relL |> set
+
+    relR
+    |> mapColKeys (fun key ->
+        if setL.Contains key then
+            prefix + key
+        else
+            key)
+    |> product relL
+
+
 let isThetaComparable binOperandL binOperandR rel =
     let check l r =
         match l, r with

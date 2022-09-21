@@ -47,6 +47,7 @@ type Expression =
     | ProjectExpression of ProjectExpression
     | DifferenceExpression of DifferenceExpression
     | RestrictExpression of RestrictExpression
+    | ProductExpression of ProductExpression
 
 and ProjectExpression =
     { Expression: Expression
@@ -60,6 +61,10 @@ and RestrictExpression =
     { Expression: Expression
       Condition: Condition }
 
+and ProductExpression =
+    { ExpressionL: Expression
+      ExpressionR: Expression }
+
 type AssignStmt =
     { Rname: Identifier
       Expression: Expression }
@@ -68,6 +73,7 @@ type Command =
     | ProjectExpression of ProjectExpression
     | DifferenceExpression of DifferenceExpression
     | RestrictExpression of RestrictExpression
+    | ProductExpression of ProductExpression
     | ListStmt
     | QuitStmt
     | PrintStmt of Identifier

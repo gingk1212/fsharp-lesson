@@ -43,6 +43,10 @@ let execute command =
             evalRestrictExpression restrictExp
             |> Result.bind saveWithRandomName
             |> checkRelationResult
+        | ProductExpression productExp ->
+            evalProductExpression productExp
+            |> Result.bind saveWithRandomName
+            |> checkRelationResult
         | ListStmt ->
             evalListStmt ()
             |> checkUnitResult

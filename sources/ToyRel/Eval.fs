@@ -12,6 +12,7 @@ let rec evalExpression expression =
     | Expression.ProjectExpression pe -> evalProjectExpression pe
     | Expression.DifferenceExpression de -> evalDifferenceExpression de
     | Expression.RestrictExpression re -> evalRestrictExpression re
+    | Expression.ProductExpression pe -> evalProductExpression pe
 
 and evalProjectExpression projExp =
     evalExpression projExp.Expression
@@ -34,6 +35,24 @@ and evalDifferenceExpression diffExp =
 and evalRestrictExpression restrictExp =
     evalExpression restrictExp.Expression
     |> Result.bind (restrictOp restrictExp.Condition)
+
+and evalProductExpression productExp =
+    // If there is the duplicate column name between the left and right relation
+    // in the product expression, rename the colum name of the right relation.
+    // If the right relation is derived from the Identifier expression then
+    // prefix the dupulicate column name with "Identifier name + .", otherwise
+    // prefix the dupulicate column name with ".".
+    let columnPrefix =
+        match productExp.ExpressionR with
+        | Identifier (Identifier.Identifier name) -> name + "."
+        | _ -> "."
+
+    result {
+        let! relL = evalExpression productExp.ExpressionL
+        let! relR = evalExpression productExp.ExpressionR
+        let! rel = productOp relL relR columnPrefix
+        return rel
+    }
 
 
 // Statement evaluator

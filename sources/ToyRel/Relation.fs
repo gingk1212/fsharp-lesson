@@ -56,3 +56,20 @@ let filter fn (Relation df) =
 
 let getColumnValue (row: ObjectSeries<string>) colName =
     row.GetAs(colName)
+
+let mapColKeys f (Relation df) =
+    Frame.mapColKeys f df
+    |> fromFrame
+
+let product (Relation df1) (Relation df2) =
+    try
+        df1.RowsDense.Values
+        |> Seq.collect(fun value1 ->
+            df2.RowsDense.Values
+            |> Seq.map value1.Merge)
+        |> Series.ofValues
+        |> Frame.ofRows
+        |> fromFrame
+        |> Result.Ok
+    with
+        | err -> Result.Error err.Message

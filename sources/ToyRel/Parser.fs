@@ -92,6 +92,10 @@ let pRestrictExpression =
           (pchar '(' >>. pCondition .>> pchar ')')
           (fun e c -> { Expression = e; Condition = c })
 
+let pProductExpression =
+    pipe2 pExprInExpr (spaces >>. pstring "product" >>. spaces >>. pExprInExpr)
+          (fun l r -> { ExpressionL = l; ExpressionR = r })
+
 // Since it is difficult to distinguish whether the right-hand sides of the
 // following statements are Identifier or DifferenceExpression, apply attempt
 // to pIdentifier.
@@ -102,6 +106,7 @@ pExpressionRef.Value <-
     <|> (pProjectExpression |>> Expression.ProjectExpression)
     <|> (pDifferenceExpression |>> Expression.DifferenceExpression)
     <|> (pRestrictExpression |>> Expression.RestrictExpression)
+    <|> (pProductExpression |>> Expression.ProductExpression)
 
 
 // Statement parser
@@ -125,8 +130,9 @@ let pAssignStmt =
 
 // Command parser
 let pCommand: Parser<_, unit> = (pProjectExpression |>> ProjectExpression)
-                                <|> (pDifferenceExpression |>> DifferenceExpression)
+                                <|> attempt(pDifferenceExpression |>> DifferenceExpression)
                                 <|> (pRestrictExpression |>> RestrictExpression)
+                                <|> (pProductExpression |>> ProductExpression)
                                 <|> pListStmt
                                 <|> pQuitStmt
                                 <|> pPrintStmt
