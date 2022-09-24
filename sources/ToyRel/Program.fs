@@ -35,18 +35,20 @@ let execute command =
             evalProjectExpression projExp
             |> Result.bind saveWithRandomName
             |> checkRelationResult
-        | DifferenceExpression diffExp ->
-            evalDifferenceExpression diffExp
-            |> Result.bind saveWithRandomName
-            |> checkRelationResult
         | RestrictExpression restrictExp ->
             evalRestrictExpression restrictExp
             |> Result.bind saveWithRandomName
             |> checkRelationResult
-        | ProductExpression productExp ->
-            evalProductExpression productExp
-            |> Result.bind saveWithRandomName
-            |> checkRelationResult
+        | InfixExpression infixExp ->
+            match infixExp with
+            | DifferenceExpression (relL, relR) ->
+                evalDifferenceExpression relL relR
+                |> Result.bind saveWithRandomName
+                |> checkRelationResult
+            | ProductExpression (relL, relR) ->
+                evalProductExpression relL relR
+                |> Result.bind saveWithRandomName
+                |> checkRelationResult
         | ListStmt ->
             evalListStmt ()
             |> checkUnitResult

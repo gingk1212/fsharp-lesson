@@ -53,8 +53,12 @@ let testProjectExpression cmd =
 
 let testDifferenceExpression cmd =
     match parseCommand cmd with
-    | DifferenceExpression d ->
-        evalDifferenceExpression d
+    | InfixExpression i ->
+        match i with
+        | DifferenceExpression (relL, relR) ->
+            evalDifferenceExpression relL relR
+        | _ ->
+            raiseToyRelException "Parsing result should be 'DifferenceExpression'"
     | _ ->
         raiseToyRelException "Parsing result should be 'DifferenceExpression'"
 
@@ -67,8 +71,12 @@ let testRestrictExpression cmd =
 
 let testProductExpression cmd =
     match parseCommand cmd with
-    | ProductExpression p ->
-        evalProductExpression p
+    | InfixExpression i ->
+        match i with
+        | ProductExpression (relL, relR) ->
+            evalProductExpression relL relR
+        | _ ->
+            raiseToyRelException "Parsing result should be 'ProductExpression'"
     | _ ->
         raiseToyRelException "Parsing result should be 'ProductExpression'"
 

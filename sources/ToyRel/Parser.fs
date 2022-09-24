@@ -79,22 +79,21 @@ let pExpression, pExpressionRef = createParserForwardedToRef()
 let pExprInExpr =
     pstring "(" >>. (pExpression <|> (pIdentifier |>> Expression.Identifier)) .>> pstring ")"
 
+let pInfixExpression =
+    pipe3 pExprInExpr (spaces >>. (pstring "difference" <|> pstring "product") .>> spaces) pExprInExpr
+          (fun l cmd r ->
+               match cmd with
+               | "difference" -> DifferenceExpression (l, r)
+               | "product" | _ -> ProductExpression (l, r))
+
 let pProjectExpression =
     pipe2 (pstring "project" >>. spaces >>. pExprInExpr .>> spaces) pColumnList
           (fun e c -> { Expression = e; ColumnList = c })
-
-let pDifferenceExpression =
-    pipe2 pExprInExpr (spaces >>. pstring "difference" >>. spaces >>. pExprInExpr)
-          (fun e1 e2 -> { Expression1 = e1; Expression2 = e2 })
 
 let pRestrictExpression =
     pipe2 (pstring "restrict" >>. spaces >>. pExprInExpr .>> spaces)
           (pchar '(' >>. pCondition .>> pchar ')')
           (fun e c -> { Expression = e; Condition = c })
-
-let pProductExpression =
-    pipe2 pExprInExpr (spaces >>. pstring "product" >>. spaces >>. pExprInExpr)
-          (fun l r -> { ExpressionL = l; ExpressionR = r })
 
 // Since it is difficult to distinguish whether the right-hand sides of the
 // following statements are Identifier or DifferenceExpression, apply attempt
@@ -103,10 +102,9 @@ let pProductExpression =
 // > hoge = (project (Employee) DeptName) difference (project (Dept) DeptName)
 pExpressionRef.Value <-
     attempt(pstring "(" >>. pIdentifier .>> pstring ")" |>> Expression.Identifier)
+    <|> (pInfixExpression |>> Expression.InfixExpression)
     <|> (pProjectExpression |>> Expression.ProjectExpression)
-    <|> (pDifferenceExpression |>> Expression.DifferenceExpression)
     <|> (pRestrictExpression |>> Expression.RestrictExpression)
-    <|> (pProductExpression |>> Expression.ProductExpression)
 
 
 // Statement parser
@@ -129,10 +127,9 @@ let pAssignStmt =
 
 
 // Command parser
-let pCommand: Parser<_, unit> = (pProjectExpression |>> ProjectExpression)
-                                <|> attempt(pDifferenceExpression |>> DifferenceExpression)
+let pCommand: Parser<_, unit> = (pInfixExpression |>> InfixExpression)
+                                <|> (pProjectExpression |>> ProjectExpression)
                                 <|> (pRestrictExpression |>> RestrictExpression)
-                                <|> (pProductExpression |>> ProductExpression)
                                 <|> pListStmt
                                 <|> pQuitStmt
                                 <|> pPrintStmt

@@ -10,46 +10,48 @@ let rec evalExpression expression =
     match expression with
     | Identifier id -> loadRelation id
     | Expression.ProjectExpression pe -> evalProjectExpression pe
-    | Expression.DifferenceExpression de -> evalDifferenceExpression de
     | Expression.RestrictExpression re -> evalRestrictExpression re
-    | Expression.ProductExpression pe -> evalProductExpression pe
+    | Expression.InfixExpression ie ->
+        match ie with
+        | DifferenceExpression (expL, expR) -> evalDifferenceExpression expL expR
+        | ProductExpression (expL, expR) -> evalProductExpression expL expR
 
 and evalProjectExpression projExp =
     evalExpression projExp.Expression
     |> Result.bind (projectOp projExp.ColumnList)
 
-and evalDifferenceExpression diffExp =
-    let diff rel1 rel2 = 
+and evalDifferenceExpression expL expR =
+    let diff rel1 rel2 =
         if isUnionCompatible rel1 rel2 then
             differenceOp rel1 rel2
         else
             Result.Error "Relations are not union compatible."
 
     result {
-        let! rel1 = evalExpression diffExp.Expression1
-        let! rel2 = evalExpression diffExp.Expression2
-        let! c = diff rel1 rel2
-        return c
+        let! relL = evalExpression expL
+        let! relR = evalExpression expR
+        let! rel = diff relL relR
+        return rel
     }
 
 and evalRestrictExpression restrictExp =
     evalExpression restrictExp.Expression
     |> Result.bind (restrictOp restrictExp.Condition)
 
-and evalProductExpression productExp =
+and evalProductExpression expL expR =
     // If there is the duplicate column name between the left and right relation
     // in the product expression, rename the colum name of the right relation.
     // If the right relation is derived from the Identifier expression then
     // prefix the dupulicate column name with "Identifier name + .", otherwise
     // prefix the dupulicate column name with ".".
     let columnPrefix =
-        match productExp.ExpressionR with
+        match expR with
         | Identifier (Identifier.Identifier name) -> name + "."
         | _ -> "."
 
     result {
-        let! relL = evalExpression productExp.ExpressionL
-        let! relR = evalExpression productExp.ExpressionR
+        let! relL = evalExpression expL
+        let! relR = evalExpression expR
         let! rel = productOp relL relR columnPrefix
         return rel
     }

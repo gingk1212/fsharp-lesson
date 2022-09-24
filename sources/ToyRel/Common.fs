@@ -45,35 +45,29 @@ and InfixCondition =
 type Expression =
     | Identifier of Identifier
     | ProjectExpression of ProjectExpression
-    | DifferenceExpression of DifferenceExpression
+    | InfixExpression of InfixExpression
     | RestrictExpression of RestrictExpression
-    | ProductExpression of ProductExpression
+
+and InfixExpression =
+    | DifferenceExpression of Expression * Expression
+    | ProductExpression of Expression * Expression
 
 and ProjectExpression =
     { Expression: Expression
       ColumnList: Column list }
 
-and DifferenceExpression =
-    { Expression1: Expression
-      Expression2: Expression }
-
 and RestrictExpression =
     { Expression: Expression
       Condition: Condition }
-
-and ProductExpression =
-    { ExpressionL: Expression
-      ExpressionR: Expression }
 
 type AssignStmt =
     { Rname: Identifier
       Expression: Expression }
 
 type Command =
+    | InfixExpression of InfixExpression
     | ProjectExpression of ProjectExpression
-    | DifferenceExpression of DifferenceExpression
     | RestrictExpression of RestrictExpression
-    | ProductExpression of ProductExpression
     | ListStmt
     | QuitStmt
     | PrintStmt of Identifier
