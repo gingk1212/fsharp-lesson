@@ -40,7 +40,7 @@ let pBinOperand =
 
     (regex ("[0-9]+") |>> int |>> Int |>> Primitive)
     <|> ((pchar '"' >>. (manyChars normalChar) .>> pchar '"') |>> Str |>> Primitive)
-    <|> ((pchar '[' >>. pColumn .>> pchar ']') |>> Column)
+    <|> (pColumn |>> Column)
 
 let pCondAtom =
     let pWithoutParen =
