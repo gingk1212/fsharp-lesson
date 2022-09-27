@@ -80,9 +80,10 @@ let testProductExpression cmd =
     | _ ->
         raiseToyRelException "Parsing result should be 'ProductExpression'"
 
-let parseAssignStmt cmd =
+let testAssignStmt cmd =
     match parseCommand cmd with
     | AssignStmt a ->
-        a
+        evalAssignStmt a |> shouldOk
+        loadRelation a.Rname
     | _ ->
         raiseToyRelException "Parsing result should be 'AssignStmt'"

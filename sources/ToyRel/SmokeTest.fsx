@@ -171,35 +171,20 @@ match parseCommand "print Employee" with
 //
 // AssignStmt test
 //
-parseAssignStmt "hoge = (Employee)"
-|> fun a ->
-    evalExpression a.Expression
-    |> shouldOk
-    |> columnCount
-    |> should 3
+testAssignStmt "hoge = (Employee)"
+|> shouldOk
+|> columnCount
+|> should 3
 
-    let (Identifier.Identifier rname) = a.Rname
-    rname |> should "hoge"
+testAssignStmt "fuga = project (Employee) Name, DeptName"
+|> shouldOk
+|> columnCount
+|> should 2
 
-parseAssignStmt "fuga = project (Employee) Name, DeptName"
-|> fun a ->
-    evalExpression a.Expression
-    |> shouldOk
-    |> columnCount
-    |> should 2
-
-    let (Identifier.Identifier rname) = a.Rname
-    rname |> should "fuga"
-
-parseAssignStmt "r2 = (project (Employee) DeptName) difference (project (Dept) DeptName)"
-|> fun a ->
-    evalExpression a.Expression
-    |> shouldOk
-    |> rowCount
-    |> should 1
-
-    let (Identifier.(*  *)Identifier rname) = a.Rname
-    rname |> should "r2"
+testAssignStmt "r2 = (project (Employee) DeptName) difference (project (Dept) DeptName)"
+|> shouldOk
+|> rowCount
+|> should 1
 
 parseCommandWithFailure "project = (Employee)"
 
