@@ -19,7 +19,8 @@ let pSBracketColumn =
     |>> SBracketColumn
 
 let pColumn =
-    (pIdentifier |>> Column.Identifier)
+    attempt((pIdentifier .>> pchar '.') .>>. pIdentifier) |>> PrefixedColumn
+    <|> (pIdentifier |>> Column.Identifier)
     <|> pSBracketColumn
 
 let pComma = spaces >>. pstring "," .>> spaces
@@ -95,6 +96,12 @@ let pRestrictExpression =
           (pchar '(' >>. pCondition .>> pchar ')')
           (fun e c -> { Expression = e; Condition = c })
 
+let pJoinExpression =
+    pipe3 (pstring "join" >>. spaces >>. pExprInExpr .>> spaces)
+          (pExprInExpr .>> spaces)
+          (pchar '(' >>. pCondition .>> pchar ')')
+          (fun l r c -> { ExpressionL = l; ExpressionR = r; Condition = c })
+
 // Since it is difficult to distinguish whether the right-hand sides of the
 // following statements are Identifier or DifferenceExpression, apply attempt
 // to pIdentifier.
@@ -105,6 +112,7 @@ pExpressionRef.Value <-
     <|> (pInfixExpression |>> Expression.InfixExpression)
     <|> (pProjectExpression |>> Expression.ProjectExpression)
     <|> (pRestrictExpression |>> Expression.RestrictExpression)
+    <|> (pJoinExpression |>> Expression.JoinExpression)
 
 
 // Statement parser
@@ -130,6 +138,7 @@ let pAssignStmt =
 let pCommand: Parser<_, unit> = (pInfixExpression |>> InfixExpression)
                                 <|> (pProjectExpression |>> ProjectExpression)
                                 <|> (pRestrictExpression |>> RestrictExpression)
+                                <|> (pJoinExpression |>> JoinExpression)
                                 <|> pListStmt
                                 <|> pQuitStmt
                                 <|> pPrintStmt

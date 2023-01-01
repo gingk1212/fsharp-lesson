@@ -39,6 +39,10 @@ let execute command =
             evalRestrictExpression restrictExp
             |> Result.bind saveWithRandomName
             |> checkRelationResult
+        | JoinExpression joinExp ->
+            evalJoinExpression joinExp
+            |> Result.bind saveWithRandomName
+            |> checkRelationResult
         | InfixExpression infixExp ->
             match infixExp with
             | DifferenceExpression (relL, relR) ->

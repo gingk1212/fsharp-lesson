@@ -159,6 +159,40 @@ testProductExpression "(project (Employee) Name, EmpId) product (Dept)"
 
 
 //
+// JoinExpression test
+//
+testJoinExpression "join (Employee) (Dept) (Employee.DeptName=Dept.DeptName)"
+|> shouldOk
+|> rowCount
+|> should 4
+
+testJoinExpression "join (Employee) (Dept) (Employee.DeptName=\"Finance\")"
+|> shouldOk
+|> rowCount
+|> should 6
+
+testJoinExpression "join (Employee) (Dept) (Dept.DeptName=\"Finance\")"
+|> shouldOk
+|> rowCount
+|> should 5
+
+testJoinExpression "join (Employee) (Dept) (DeptName=\"Finance\")"
+|> shouldOk
+|> rowCount
+|> should 6
+
+testJoinExpression "join (Employee) (Dept) (Dept.Manager=\"George\")"
+|> shouldOk
+|> rowCount
+|> should 5
+
+testJoinExpression "join (project (Employee) Name, DeptName) (Dept) (DeptName=\"Finance\")"
+|> shouldOk
+|> rowCount
+|> should 6
+
+
+//
 // PrintStmt test
 //
 match parseCommand "print Employee" with

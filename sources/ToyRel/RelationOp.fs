@@ -34,11 +34,7 @@ let getColumnType col rel =
 
 let projectOp columnList rel =
     try
-        let colNames = columnList |> List.map (fun column ->
-            match column with
-            | Column.Identifier (Identifier.Identifier id) -> id
-            | SBracketColumn sb -> sb
-        )
+        let colNames = columnList |> List.map getNameFromColumn
         Result.Ok (project colNames rel)
     with
         | err -> Result.Error err.Message
