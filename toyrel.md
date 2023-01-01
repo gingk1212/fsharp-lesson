@@ -17,6 +17,8 @@ layout: page
 上のリンクから買ってくれるとちょっとアフィリエイトが入って嬉しいくらい。
 牛の本とか持ってるなら買わなくてもいいと思います（自分は昔読んだが捨ててしまって手元に無い…）
 
+ただ、練習問題などで同じ問題をやってみる時は、参照はつけます。そういう場合にはtandpと略称で呼ぶ事にします。
+
 ## ToyRelとrelational modelとrelational algebra
 
 RDBの基礎は、relational modelとrelational algebraです。
@@ -253,7 +255,7 @@ identifierというのは普通の言語では変数や関数名に使われる�
 例えば以下のident1とかident2とかident3の場所に来るのがidentifierです。
 
 ```
-ident1 = project (ident2) idnet3, ident4
+ident1 = project (ident2) ident3, ident4
 ```
 
 左辺の変数名、projectの引数のリレーションの名前、projectの引数のカラムの名前などで使われます。
@@ -408,6 +410,8 @@ projectは最終的にはかなり本格的なExpressionの仕様が必要にな
 - 実装が一番簡単なケース
 
 という事でここでは、そんな暫定的な仕様から始めたいと思います。
+
+**注:この課題以降、macOSの場合は日本語の文字列を含んだコードをScratch.fsxで実行すると、実装に問題が無くても文字化けして失敗する事が確認されています。その場合は一旦変数に入れたり日本語の無いcsvファイルで同様のクエリを書いてみたりして動作を確認して先に進んでください。**
 
 ### projectの文法
 
@@ -1132,31 +1136,31 @@ fsxで着想を得ていろいろと確認し、それらをfsへ整理してい
 他の部分とはあまり関わらない所ですが、せっかくなのでまともなREPLも作る事にしましょう。
 最終的な出口とのつなぎが分かる方がコードのデザインを考えやすいですし。
 
-単に `Console.ReadLine()` などを使っても良いのですが、これではバックスペースや矢印キーなので編集出来ないので複雑なrelational algebraを書く時にはやや辛い。
+単に `Console.ReadLine()` などを使っても良いのですが、これではバックスペースや矢印キーなどで編集出来ないので複雑なrelational algebraを書く時にはやや辛い。
 
-もうちょっとまともなeditting experienceが欲しいので、radlineを使う事にします。
+もうちょっとまともなeditting experienceが欲しいので、このレッスンのために自分が作った、ReCJKLineを使う事にします。
 
-### radline入門
+### ReCJKLine入門
 
 Unix系のコンソールだとこういう時にはreadlineという定番のライブラリがあるのですが、
 dotnetだと何が使われるのか良く知りません。
+いくつかNuGetにあるのを評価した所、どれも日本語の扱いが壊れていて、クエリに日本語を使いたいToyRelとしては都合が悪い。
 
-以前radlineというライブラリをredditで見かけて少し触った所期待通り動いたので、
-今回はこれを使う事にします。
+という事でReCJKLineというライブラリを作ってみました。これを使ってみたいと思います。
 
-- [spectreconsole/radline: A .NET library to read and display keyboard input.](https://github.com/spectreconsole/radline)
-- [NuGet Gallery - RadLine 0.6.0](https://www.nuget.org/packages/RadLine)
+- [karino2/ReCJKLine: Readline like dotnet library which support CJK (fullwidth).](https://github.com/karino2/ReCJKLine)
+- [NuGet Gallery - ReCJKLine.karino2 1.0.2](https://www.nuget.org/packages/ReCJKLine.karino2/)
+
 
 いつものようにプロジェクトにdotnetコマンドで追加して、以下のようなコードをProgram.fsに書いて動かしてみてください。
 
 ```
-open RadLine
+open ReCJKLine
 
-let lineEditor = LineEditor()
-lineEditor.Prompt <- LineEditorPrompt(">", ".")
+let lineEditor = ReCJKLine()
 
 let rec repl () =
-  let text = lineEditor.ReadLine(System.Threading.CancellationToken.None).Result
+  let text = lineEditor.ReadLine(">")
   printfn "read: %s" text
   repl ()
 
@@ -1164,16 +1168,6 @@ repl ()
 ```
 
 基本的にはこの程度の機能にこれまでのコードをインテグレートすれば十分と思います。
-
-なおデフォルトではコントロールと矢印の上と下でヒストリーっぽいのですが、Macだと他にかぶって動かないですね。
-以下のようにしたら、Ctrl-Pでヒストリーバックが見れるようになりました。
-
-```
-open System
-lineEditor.KeyBindings.Add<PreviousHistoryCommand>(ConsoleKey.P, ConsoleModifiers.Control)
-```
-
-Ctrl-NとPくらいはサポートしても良いかもしれません。（しなくてもOK）
 
 ### 課題11: REPLとインテグレートせよ
 
@@ -1221,7 +1215,7 @@ projectだけだといまいち面白い事が出来ないので、次にdiffere
 Relational algebraでのdifferenceはいわゆるset differenceです。
 
 `(project (Employee) DeptName) difference (project (Dept) DeptName)` みたいに書くと、
-Employeeリレーションの中にあるDeptNameで、Deptリーレションには無いものの一覧が出ます。
+Employeeリレーションの中にあるDeptNameで、Deptリレーションには無いものの一覧が出ます。
 
 set differenceについては詳細は以下。
 
@@ -1237,7 +1231,7 @@ DifferenceExpression = Expression "difference" Expression
 
 で良いでしょう。（別に中置にしなくても良いのだけどLEAPがそうなっているしパーサーの練習に手頃なので同じシンタックスを採用）
 
-### Union comparable
+### Union compatible
 
 さて、unionやdifferenceはrowが一致しているかいないかを判定出来る必要があります。
 そのためには、
@@ -1246,11 +1240,11 @@ DifferenceExpression = Expression "difference" Expression
 - 各カラムの型が同じ
 
 という制約を満たしている必要がある。
-この制約をUnion comparableと呼びます。
+この制約をUnion compatibleと呼びます。
 
-differenceの仕様としては、Union Comparableじゃない時はエラーにしたい。
+differenceの仕様としては、Union compatibleじゃない時はエラーにしたい。
 
-カラムの順番も同じでないとUnion Comparableではありません。
+カラムの順番も同じでないとUnion compatibleではありません。
 
 型については次の「Deedleにおけるカラムの型」を参照ください。
 
@@ -1358,7 +1352,7 @@ fsharp-lessonとしては、解説はmutableな辞書も使っていきますが
 
 （補足：解説を書いた時には実装出来ないと気づいていなかったけど、教育的に良いので残す事にした）
 
-とりあえずUnion comparableでない時はfailwithで落とす感じで実装してみます。
+とりあえずUnion compatibleでない時はfailwithで落とす感じで実装してみます。
 
 まず以下が動くように実装します。
 
@@ -1381,7 +1375,7 @@ setを使って実装してみると、rowはcomparableじゃない的なこと�
 ### 課題14: エラー処理を実装する
 
 エラーメッセージを保持するべく、Union型で。中身は文字列だけでいいでしょう。
-Union Comparableじゃない場合、projectでカラム名が間違ってる場合など。
+Union compatibleじゃない場合、projectでカラム名が間違ってる場合など。
 
 少しここの型の設計は真面目に考えましょう。
 
@@ -1391,8 +1385,8 @@ Union Comparableじゃない場合、projectでカラム名が間違ってる場
 
 - [tandp.md](tandp.md)の図書館データベースで、図書館にまったく本が存在しないsubjectの一覧を取り出す
 - wikipediaデータベースでEmployeeの居ない部署を取り出す
-- wikipediaデータベースで`(project (Employee) DeptName) difference (project (Dept) Manager)`を実行して、Union Comparableじゃない（カラムが違う）エラーが出ることを確認する
-- wikipediaデータベースで`(project (Employee) EmpId) difference (project (EmployeeTypeMismatch) EmpId)`を実行して、Union Comparableじゃない（型が違う）エラーが出ることを確認する
+- wikipediaデータベースで`(project (Employee) DeptName) difference (project (Dept) Manager)`を実行して、Union compatibleじゃない（カラムが違う）エラーが出ることを確認する
+- wikipediaデータベースで`(project (Employee) EmpId) difference (project (EmployeeTypeMismatch) EmpId)`を実行して、Union compatibleじゃない（型が違う）エラーが出ることを確認する
 
 他にもなにかやってみてください。（良さげなのを思いついたら、ここに追加するPRくれると嬉しい）
 
@@ -1403,7 +1397,7 @@ Union Comparableじゃない場合、projectでカラム名が間違ってる場
 [tandp.md](tandp.md)の図書館データベースの例だと、以下のようにすると、
 
 ```
-> restrict auction (sell_price>purchse_price)
+> restrict auction (sell_price>purchase_price)
 ```
 
 sell_priceがpurchase_priceより大きなものだけが残る、という感じの機能です。
@@ -1452,7 +1446,7 @@ thetaは `=, <>, <` などです。
 そしてrestrictの条件はtheta-comparableでなくてはいけなくて、
 theta-comparableじゃない場合はエラーとして処理したい。
 
-union comparableの時と同様、それを表すエラーを作って返してください。
+union compatibleの時と同様、それを表すエラーを作って返してください。
 
 ### 課題15: restrictを実装しよう
 
@@ -1460,6 +1454,9 @@ union comparableの時と同様、それを表すエラーを作って返して�
 
 restrictの条件としては、theta-comparableなカラムとthetaによる条件の他に、and, or, notも追加しましょう。
 andやorは両方がboolでないといけない。片方が文字列や数字はNGとします。（これもtheta-comparableでは無い、というエラーでいいでしょう）
+
+この辺からは単に仕様をそのまま実装していくと酷いコードになりがちなので、書かれていない抽象概念なども作り出してうまい事コードを構成していきたい所。
+分かりにくい所にはコメントなども書いて欲しい。
 
 ### restrictを動かしてみる
 
@@ -1516,15 +1513,38 @@ Name EmpId DeptName Dept.DeptName Manager
 
 productが実装出来たら、theta-joinを実装しましょう。
 
-productしたあとにrestrictするかのように動けば良いのだけれど、、
-restrictのcondの指定でrelationの名前をつけてもつけなくても良い所は違いがある。
-そこだけ注意して実装。
+productしたあとにrestrictするかのように動けば良いのだけれど、
+restrictのcondの指定でrelationの名前をつけてもつけなくても良い所は違いがある。（重複してないカラムでもcond内ではRelation名のprefixをつけて指定してもOKとします。普通SQLとかもそうなので）
+
+そこだけ注意して実装しましょう。
 
 ### joinを動かしてみる
 
-tandp p68のQuery 4.3.4よりあとから例を持ってくる。
+まずはWikipediaの例、[Relational algebra - Wikipedia](https://en.wikipedia.org/wiki/Relational_algebra)から。
 
-## renameの実装
+- Natural joinの所の例にあるEmployeeとDeptのjoin結果となるようなtheta-joinを書いてみよう
+- CarとBoatの例を動かせ（最初の人はcsvのPRもください…）
+
+[tandp](tandp.md)の「ファッション雑貨店の在庫管理データベース」に対して、tandpのp67以降の例を動かしてみましょう（以下に書いたものです）
+
+- 4.3.1 商品を提供している全producerを調べよ
+- 4.3.2 支社に配送している全producerを調べよ
+- 4.3.3 L1支社に配送されてまだin stockな状態の全商品の、sell_priceとcost_priceを以下の２つの方法で調べよ
+  - P1にL1支社でin stockなrowの一覧を入れ、次にP1からsell_price, cost_priceを取り出して表示する、という２つのクエリに分けるやり方
+  - 上と同じものをかっこを使ってネストして一文にしたやり方
+- 4.3.4 以下の条件を満たすproducer, product_code, descriptionを表示せよ：全てのブランチで、届いた日と同じ日に売れたもの。（以下ヒントを書くので、自分で好きに書いたあとにヒントの通りにも書いてみて下さい）
+  - r1にstockのうちdate_inとdate_outが等しいものだけを入れる
+  - r2でr1とdeliveryを、ブランチとストックが同じようにjoin
+  - r3にr2とgoodsをjoin
+  - r4でr3をproject
+  - このやり方は最後にprojetをやっているので効率が悪い。もっと早くprojectを行うようにクエリを直すとどうなるか？
+- 4.3.5 以下の条件を満たすbranch, size, colour, sell_priceの一覧を表示せよ：まだ売れてないdress全て
+
+他にもなにか面白い例を考えてPRください（csvも）。
+自分が考えたのは機械学習のアルゴリズムの一覧とPRMLで扱ってるアルゴリズムをjoinしてPRMLの教師なし学習のアルゴリズムの一覧を出す、
+というのがあるんですが、csv作る途中で挫折した…
+
+### 課題18: renameの実装
 
 一応実装しておく。
 
@@ -1534,6 +1554,7 @@ tandp p68のQuery 4.3.4よりあとから例を持ってくる。
 
 - リレーションは最初のカッコでわかるので別途は指定しない
 - rename対象はidentifierか`[`とかでくくったもの（colname)
+- 上記の文で、專門のカラムの名前が科目になったリレーションが他のクエリと同様にランダムに生成される名前に保存される（シラバス.csvは変更されない）
 
 ## 細々としたものの対応
 
@@ -1541,9 +1562,159 @@ tandp p68のQuery 4.3.4よりあとから例を持ってくる。
 - intersect
 - `@last`
 
-この辺はやらなくてもいいけれどここまでやったらか一応。
+この辺はやらなくてもいいけれどここまでやったから一応。
+
+### 課題19: unionとintersectの実装
+unionは、２つのリレーション、rel1とrel2に対して、`(rel1) union (rel2)` の形で、rel1のrowとrel2のrowのset unionになっているリレーションを出力する、という機能です。differenceの時と同様にUnion compatibleかどうかを判定してください。
+
+intersectは、differenceで差し引いた部分、つまり、２つのリレーション、rel1とrel2に対して、rel1とrel2両方に現れるrowだけ持つリレーションをつくる機能です。
+
+### 課題20: `@last`の実装
+`@last`は直前に生成されたrelationの名前が入ります。
+
+```
+> project (シラバス) 専門, 学年
+Relation zzybac returned.
+
+> print @last
+専門   学年
+----  ----
+数学    1
+物理    1
+数学    2
+```
+
+普通はランダムに生成されたリレーションの名前をいちいち目視して打つのを避けるためのものですが、
+assignmentの時にも左辺の変数名が入るとします。
 
 ## コマンドにしてみる
 
-一応シングルバイナリー（ただしランタイムは含めない奴）にしてみる。
+せっかくここまで完成したので、単体のコマンドにしてみましょう。
+ランタイムまで含めたそれ単体で他のマシンに持っていっても使える形式と、
+dotnetランタイムは入っている事を前提にした形式の２つがありますが、
+今回は後者で良いでしょう。
 
+以下の公式ドキュメントに必要な事は書いてありますが、
+
+[Create a single file for application deployment - Microsoft Docs](https://docs.microsoft.com/en-us/dotnet/core/deploying/single-file/overview?tabs=cli)
+
+読み解くのは結構たいへんなので、自分の手元にあったシェルスクリプトを載せておきます。
+
+```
+$ dotnet publish -c release -r osx-x64 --self-contained false /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true
+$ cp bin/release/net6.0/osx-x64/publish/mdvcat ~/bin
+```
+
+たぶんSelfContainedも`/p:`の形式で良い気がする。
+
+Mac以外のRuntime Identifierなどが必要な人は公式ドキュメントを見て下さい。例えば、Windowsの場合以下のように変更する必要があるはずです。
+```
+$ dotnet publish -c release -r win-x64 --self-contained false -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+```
+
+
+データベースのルートをどう指定するか？などはたとえば以下の二通りくらいは考えられそうです。
+
+- データベースのルートで実行する事にし、現在のディレクトリ（CWDとかpwdと呼ばれるもの）を使う
+- Arguで適当に引数でパスを指定出来るようにする
+
+どのくらい頑張るのかはおまかせします。どっちでもいいと思います。
+
+## 第二回の終わりに
+
+第二回はこれで終わりとなります。いかがだったでしょうか？
+
+最終的にはかなり複雑なクエリも実行出来るRelational Algebraの処理系になっていて、それぞれのクエリがどう動くのかもちゃんと理解出来ると思います。
+こうした処理系はデータを追加したりクエリをたくさん並べる事で、さまざまな処理を行わせる事が出来るので、
+単に書いた処理が動くだけのプログラムとはちょっと違った楽しさがあると思うのですがいかがでしょうか？
+
+文字列をパースしてASTとかExpressio Treeと呼ばれるツリーに変換すること、
+それを解釈して実行する事は、データベースに限らずプログラム言語の言語処理系など多くの所で見られる構造でもあります。
+一度どこかで自分で書いた経験を持っていると、似たような問題に直面した時にもだいぶ楽にコードが書けると思います。
+
+fsharp-lessonを考えた時に「このくらいの規模のソフトウェアを自分で書く経験をもたせられる場に出来たらいいな」と思って始めたものが、
+だいたい実現出来たかな、と自分では思っています。
+
+静的型付けのコンパイル型の言語で作るメリットや違いなどもちゃんと体験出来る規模だと思いますし、
+日々の業務を片付けるだけのとりあえず動くコードしか書いてこなかった、
+という人も、少なくとも１つちゃんとしたプログラムを書いた、といえるような内容と思います。
+
+やってみてどうですかね？やる前に期待していたような経験になったでしょうか？
+感想など聞かせてくれたら幸いです。
+
+{% capture leap_talk %}
+**LEAPとToyRel**  
+
+自分は学生の頃LEAPを触ってなかなか良く出来ているな、と関心したのだけれど、
+今回久しぶりに触ってみようとコードを持ってくると動かないし、
+中を見るとC言語でいまさらこの手の事をやるのにC言語は辛いなぁ、とも思った。
+このfsharp-lessonの第二回を書くために手元では多少ワークラウンドを入れて動かして挙動を見たりしていますが、
+ifdefも多く、ちゃんと直すのは結構面倒で、
+これならもっと現代的な言語で作り直す方がいいなぁ、というのが率直な感想。
+
+同じようなコンセプトの、勉強目的のRelational Algebraは無いかなぁ、と探すも、意外と似たようなものがありませんでした。
+勉強目的のシステムはだいたいトランザクションとかインデックスとかに多くの実装コストがかかっていて、
+大変な割にはあまり多くの事が出来ない。
+そういうのはあまり作っていても面白く無い。
+
+LEAPは変数がリレーションの名前になるという単純な仕組みでプログラムみたいな事が書けて結構複雑なクエリを書く事も出来ます。
+その割には実装はコンパクトで、Relational Algebraの処理を実現するにはどうしたらいいか、という問題だけを割とわかりやすく体験出来ます。
+これは仕様の切り口が素晴らしいな、と個人的には思っています。
+
+自分は「そのうちgolangとかrustとかその辺で似たようなの作りたいな」
+と思っていたのですが、このたびF# で皆様に作ってもらって、
+これはこれでなかなかいいんじゃないかな、と思いました。
+こういうのは実際に実装してみないと分からない仕様の決断みたいなのが全部潰してあるという事に意味があるので、
+現代の動かせる形でそうした決断を一通り行ったバイナリが存在することには一定の意味があると思っています。
+
+現代的な言語でRelational Algebraの処理に集中出来て簡単に変更、改変出来るようなものがある、
+というのは、ちゃんとドキュメントとか整備してredditなどに宣伝したらそれなりに反響があるかもしれないけれど、どうですかね？
+
+{% endcapture %}
+{% include myquote.html body=leap_talk %}
+
+
+{% capture to_dbms %}
+**データベースの勉強のために**  
+
+ToyRelはRelational Algebraの処理系である、と言い続けて来ました。
+「DBMSを自分で作ってみよう！そんなの作っちゃうなんて凄いでしょ？」というフリはしない、
+というのは、c-lessonにも共通する私のXX-lessonのポリシーでもあり、
+そうしたフリをしない代わりに教育目的として費用対効果を最大限まで追求するべき、
+というのが自分の考えです。
+
+でもToyRelはDBMSに似たものである事も間違いなく、
+本格的にデータベースを学びたい人にとって、
+良いスタート地点ではあると思います。
+特にパースからクエリアナライザのあたりまではToyRelでも十分に理解出来る話題となります。
+
+ここでは本格的にデータベースを学ぼうという人向けに、簡単に話をしておきます。
+
+実際に業務でRDBMSなどをユーザーとしてハードに使う場合、
+重要になってくるのは自分の書いたクエリがどのくらいのページreadを生むか、
+という事だと思います。
+そうした見積もりを考える上でToyRelに大きく欠けているのがISAMです。
+ようするにB-Treeのインデックスの事ですね。
+
+こうしたコストの見積もりは結構本格的に勉强しないと出来るようにはなりませんが、
+実際の計算はToyRelなどでsetやHashSetを使ってtheta joinを実装した時にどのくらいタプルをなめるのか、
+とかそういった事を考える事が出来れば、
+それをさらに発展させたような内容になります。
+全然別のものというよりは、ToyRelの計算コストをどうやって削減していくか、という感じの話ですね。
+なので、本格的に学ぶ時にもToyRelを実装した経験はなかなか有益だと思います。
+
+そういった事を本気で学びたい場合は、以下の書籍、Database Management Systems、いわゆる牛本が定番だと思います（その割には改訂版出てないんですね…）
+
+データベースは使う機会が多いという点でちゃんと学ぶご利益があるとともに、
+現代のソフトウェアにおいてかなり洗練された実装を持つ分野の一つでもあるため、
+ソフトウェアを作る勉强としても良い題材です。
+
+<iframe sandbox="allow-popups allow-scripts allow-modals allow-forms allow-same-origin" style="width:120px;height:240px;" marginwidth="0" marginheight="0" scrolling="no" frameborder="0" src="//rcm-fe.amazon-adsystem.com/e/cm?lt1=_blank&bc1=000000&IS2=1&bg1=FFFFFF&fc1=000000&lc1=0000FF&t=karino203-22&language=ja_JP&o=9&p=8&l=as4&m=amazon&f=ifr&ref=as_ss_li_til&asins=007123151X&linkId=5628b4778dfab0858f67af28e581efd1"></iframe>
+
+自分は昔サーバーサイドで結構真面目にSQL叩く仕事をしていたのでこの本は何度も読み直して、SQL Serverの返すExecution Planなどを眺めてはコストを見積もったりしていました。
+
+データベースを本格的に学んでみたいという人にはおすすめ出来る本です。
+Kindle化されないですかねぇ。
+
+{% endcapture %}
+{% include myquote.html body=to_dbms %}
