@@ -102,7 +102,7 @@ and evalJoinExpression joinExp =
                         elif (prefix = nameL && not (keysL.Contains(name))) ||
                              (prefix = nameR && not (keysR.Contains(name)))
                         then
-                            Result.Error (sprintf "No such key in '%s'." prefix)
+                            Result.Error (sprintf "No such key '%s' in '%s'." name prefix)
                         else
                             Result.Ok (Column(Column.Identifier(Identifier.Identifier($"{prefix}.{name}"))))
                     | _ ->

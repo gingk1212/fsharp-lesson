@@ -191,6 +191,12 @@ testJoinExpression "join (project (Employee) Name, DeptName) (Dept) (DeptName=\"
 |> rowCount
 |> should 6
 
+testJoinExpression "join (Employee) (Dept) (Hoge.DeptName=\"Finance\")"
+|> shouldError
+
+testJoinExpression "join (Employee) (Dept) (Employee.Hoge=\"Finance\")"
+|> shouldError
+
 
 //
 // PrintStmt test
