@@ -121,6 +121,7 @@ and modifyJoinExpCond joinExp =
             match singleCond with
             | Negation ng ->
                 modifySingleCond ng
+                |> Result.map Negation
             | CondAtom ca ->
                 modifyCondAtom ca
                 |> Result.map CondAtom
