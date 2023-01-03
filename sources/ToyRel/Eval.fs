@@ -104,7 +104,7 @@ and evalJoinExpression joinExp =
                         then
                             Result.Error (sprintf "No such key '%s' in '%s'." name prefix)
                         else
-                            Result.Ok (Column(Column.Identifier(Identifier.Identifier($"{prefix}.{name}"))))
+                            Result.Ok (binOperand)
                     | _ ->
                         Result.Ok (binOperand)
                 | _ ->
