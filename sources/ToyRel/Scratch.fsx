@@ -48,7 +48,7 @@ let joinExp =
 
 evalJoinExpression joinExp
 
-modifyJoinExpCond joinExp
+replaceJoinExpCond joinExp
 
 
 let nameL = "Hoge"
@@ -60,5 +60,5 @@ let prefix = Identifier.Identifier("Hoge")
 let name = Identifier.Identifier("c")
 let binOperand = Column(PrefixedColumn(prefix, name))
 
-modifyBinOperand nameL nameR keysL keysR binOperand
+replaceBinOperand nameL nameR keysL keysR binOperand
 
