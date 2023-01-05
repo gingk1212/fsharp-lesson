@@ -52,6 +52,7 @@ type Expression =
     | InfixExpression of InfixExpression
     | RestrictExpression of RestrictExpression
     | JoinExpression of JoinExpression
+    | RenameExpression of RenameExpression
 
 and InfixExpression =
     | DifferenceExpression of Expression * Expression
@@ -70,6 +71,11 @@ and JoinExpression =
       ExpressionR: Expression
       Condition: Condition }
 
+and RenameExpression =
+    { Expression: Expression
+      OldName: NormalColumn
+      NewName: NormalColumn }
+
 type AssignStmt =
     { Rname: Identifier
       Expression: Expression }
@@ -79,6 +85,7 @@ type Command =
     | ProjectExpression of ProjectExpression
     | RestrictExpression of RestrictExpression
     | JoinExpression of JoinExpression
+    | RenameExpression of RenameExpression
     | ListStmt
     | QuitStmt
     | PrintStmt of Identifier
@@ -104,16 +111,17 @@ let createBaseName () =
     let randStr = Seq.init 4 randChar |> String.Concat
     Identifier.Identifier (prefix + randStr)
 
+let getNameFromNormalColumn col =
+    match col with
+    | NormalColumn.Identifier (Identifier.Identifier i) -> i
+    | NormalColumn.SBracketColumn s -> s
+
 let getNameFromColumn col =
     match col with
     | NormalColumn n ->
-        match n with
-        | NormalColumn.Identifier (Identifier.Identifier i) -> i
-        | NormalColumn.SBracketColumn s -> s
+        getNameFromNormalColumn n
     | PrefixedColumn (Identifier.Identifier prefix, col) ->
-        match col with
-        | NormalColumn.Identifier (Identifier.Identifier i) -> $"{prefix}.{i}"
-        | NormalColumn.SBracketColumn s -> $"{prefix}.{s}"
+        $"{prefix}.{getNameFromNormalColumn col}"
 
 type ResultBuilder() =
     member this.Bind(m, f) = Result.bind f m

@@ -24,41 +24,30 @@ open Parser
 #load "TestUtils.fs"
 open TestUtils
 
-changeDB (Identifier.Identifier "wikipedia")
 
-
-// > (Employee) product (Dept)
-// Name EmpId DeptName Dept.DeptName Manager
-// ...
 //
-// in condition, should be
-// DeptName --> DeptName
-// Employee.DeptName --> DeptName
-// Dept.DeptName --> Dept.DeptName
-// Eemployee.Name --> Name
-// Dept.Manager --> Manager
+// rename (シラバス.専門) 科目
+//
 
+// let testCmd = parseCommand "rename (シラバス.専門) 科目"
+let testCmd = parseCommand "rename (シラバス.[専門]) 科目"
 
-let testCmd = parseCommand "join (Employee) (Dept) (not (Employee.DeptName=\"Finance\"))"
-
-let joinExp =
+let renameExp =
     match testCmd with
-    | JoinExpression je -> je
-    | _ -> failwith "fail"
-
-evalJoinExpression joinExp
-
-replaceJoinExpCond joinExp
+    | RenameExpression rename -> rename
+    | _ -> failwith "error"
 
 
-let nameL = "Hoge"
-let nameR = "Fuga"
-let keysL = ["a"; "b"; "c"] |> set
-let keysR = ["c"; "d"; "e"] |> set
+// let exp = Identifier(Identifier.Identifier("シラバス"))
+// // let oldName = NormalColumn.Identifier(Identifier.Identifier("専門"))
+// // let newName = NormalColumn.Identifier(Identifier.Identifier("科目"))
+// let oldName = SBracketColumn("専門")
+// let newName = SBracketColumn("科目")
+// let renameExp = { Expression = exp; OldName = oldName; NewName = newName }
 
-let prefix = Identifier.Identifier("Hoge")
-let name = Identifier.Identifier("c")
-let binOperand = Column(PrefixedColumn(prefix, name))
 
-replaceBinOperand nameL nameR keysL keysR binOperand
+evalRenameExpression renameExp
+
+
+
 

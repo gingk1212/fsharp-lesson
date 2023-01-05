@@ -105,6 +105,13 @@ let pJoinExpression =
           (pchar '(' >>. pCondition .>> pchar ')')
           (fun l r c -> { ExpressionL = l; ExpressionR = r; Condition = c })
 
+let pRenameExpression =
+    pipe3 (pstring "rename" >>. spaces >>. pchar '(' >>. pIdentifier .>> pchar '.')
+          (pNormalColumn .>> pchar ')' .>> spaces)
+          pNormalColumn
+          (fun ident oldCol newCol ->
+                { Expression = Identifier(ident); OldName = oldCol; NewName = newCol })
+
 // Since it is difficult to distinguish whether the right-hand sides of the
 // following statements are Identifier or DifferenceExpression, apply attempt
 // to pIdentifier.
@@ -116,6 +123,7 @@ pExpressionRef.Value <-
     <|> (pProjectExpression |>> Expression.ProjectExpression)
     <|> (pRestrictExpression |>> Expression.RestrictExpression)
     <|> (pJoinExpression |>> Expression.JoinExpression)
+    <|> (pRenameExpression |>> Expression.RenameExpression)
 
 
 // Statement parser
@@ -142,6 +150,7 @@ let pCommand: Parser<_, unit> = (pInfixExpression |>> InfixExpression)
                                 <|> (pProjectExpression |>> ProjectExpression)
                                 <|> (pRestrictExpression |>> RestrictExpression)
                                 <|> (pJoinExpression |>> JoinExpression)
+                                <|> (pRenameExpression |>> RenameExpression)
                                 <|> pListStmt
                                 <|> pQuitStmt
                                 <|> pPrintStmt

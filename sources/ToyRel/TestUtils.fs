@@ -87,6 +87,13 @@ let testJoinExpression cmd =
     | _ ->
         raiseToyRelException "Parsing result should be 'JoinExpression'"
 
+let testRenameExpression cmd =
+    match parseCommand cmd with
+    | RenameExpression r ->
+        evalRenameExpression r
+    | _ -> 
+        raiseToyRelException "Parsing result should be 'RenameExpression'"
+
 let testAssignStmt cmd =
     match parseCommand cmd with
     | AssignStmt a ->

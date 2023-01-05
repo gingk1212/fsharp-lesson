@@ -43,6 +43,10 @@ let execute command =
             evalJoinExpression joinExp
             |> Result.bind saveWithRandomName
             |> checkRelationResult
+        | RenameExpression renameExp ->
+            evalRenameExpression renameExp
+            |> Result.bind saveWithRandomName
+            |> checkRelationResult
         | InfixExpression infixExp ->
             match infixExp with
             | DifferenceExpression (relL, relR) ->

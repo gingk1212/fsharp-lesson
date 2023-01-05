@@ -209,6 +209,23 @@ testJoinExpression "join (Employee) (Dept) (Employee.Hoge=\"Finance\")"
 
 
 //
+// RenameExpession test
+//
+testRenameExpression "rename (Employee.EmpId) Id"
+|> shouldOk
+|> rowCount
+|> should 5
+
+testRenameExpression "rename (Employee.[EmpId]) Id"
+|> shouldOk
+|> rowCount
+|> should 5
+
+testRenameExpression "rename (Nothing.[EmpId]) Id"
+|> shouldError
+
+
+//
 // PrintStmt test
 //
 match parseCommand "print Employee" with

@@ -9,11 +9,12 @@ open RelationOp
 let rec evalExpression expression =
     match expression with
     | Identifier id -> loadRelation id
-    | Expression.ProjectExpression pe -> evalProjectExpression pe
-    | Expression.RestrictExpression re -> evalRestrictExpression re
-    | Expression.JoinExpression je -> evalJoinExpression je
-    | Expression.InfixExpression ie ->
-        match ie with
+    | Expression.ProjectExpression project -> evalProjectExpression project
+    | Expression.RestrictExpression restrict -> evalRestrictExpression restrict
+    | Expression.JoinExpression join -> evalJoinExpression join
+    | Expression.RenameExpression rename -> evalRenameExpression rename
+    | Expression.InfixExpression infix ->
+        match infix with
         | DifferenceExpression (expL, expR) -> evalDifferenceExpression expL expR
         | ProductExpression (expL, expR) -> evalProductExpression expL expR
 
@@ -154,6 +155,12 @@ and evalJoinExpression joinExp =
         let! rel = restrictOp newCond productedRel
         return rel
     }
+
+and evalRenameExpression renameExp =
+    let oldName = getNameFromNormalColumn renameExp.OldName
+    let newName = getNameFromNormalColumn renameExp.NewName
+    evalExpression renameExp.Expression
+    |> Result.map (mapColKeys (fun key -> if key = oldName then newName else key))
 
 
 // Statement evaluator
