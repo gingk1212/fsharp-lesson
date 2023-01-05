@@ -62,18 +62,23 @@ and replaceBinOperand expNameL expNameR (expKeysL: Set<string>) (expKeysR: Set<s
     match binOperand with
     | Column col ->
         match col with
-        | PrefixedColumn ((Identifier.Identifier prefix), (Identifier.Identifier name)) ->
-            if (prefix = expNameL && expKeysL.Contains(name)) ||
-               (prefix = expNameR && not (expKeysL.Contains(name)) && expKeysR.Contains(name))
+        | PrefixedColumn ((Identifier.Identifier prefix), normalCol) ->
+            let colName =
+                match normalCol with
+                | NormalColumn.Identifier (Identifier.Identifier i) -> i
+                | NormalColumn.SBracketColumn s -> s
+
+            if (prefix = expNameL && expKeysL.Contains(colName)) ||
+               (prefix = expNameR && not (expKeysL.Contains(colName)) && expKeysR.Contains(colName))
             then
-                Result.Ok (Column(Column.Identifier(Identifier.Identifier(name))))
+                Result.Ok (Column(NormalColumn(normalCol)))
             elif (prefix <> expNameL && prefix <> expNameR)
             then
                 Result.Error (sprintf "No such prefix '%s'." prefix)
-            elif (prefix = expNameL && not (expKeysL.Contains(name))) ||
-                 (prefix = expNameR && not (expKeysR.Contains(name)))
+            elif (prefix = expNameL && not (expKeysL.Contains(colName))) ||
+                 (prefix = expNameR && not (expKeysR.Contains(colName)))
             then
-                Result.Error (sprintf "No such key '%s' in '%s'." name prefix)
+                Result.Error (sprintf "No such key '%s' in '%s'." colName prefix)
             else
                 Result.Ok (binOperand)
         | _ ->

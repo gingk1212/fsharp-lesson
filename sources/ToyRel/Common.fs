@@ -5,10 +5,13 @@ open System.IO
 
 type Identifier = Identifier of string
 
-type Column =
+type NormalColumn =
     | Identifier of Identifier
     | SBracketColumn of string
-    | PrefixedColumn of Identifier * Identifier
+
+type Column =
+    | NormalColumn of NormalColumn
+    | PrefixedColumn of Identifier * NormalColumn
 
 type ColumnType =
     | Int of int
@@ -103,9 +106,14 @@ let createBaseName () =
 
 let getNameFromColumn col =
     match col with
-    | Column.Identifier (Identifier.Identifier i) -> i
-    | Column.SBracketColumn s -> s
-    | Column.PrefixedColumn (Identifier.Identifier prefix, Identifier.Identifier name) -> $"{prefix}.{name}"
+    | NormalColumn n ->
+        match n with
+        | NormalColumn.Identifier (Identifier.Identifier i) -> i
+        | NormalColumn.SBracketColumn s -> s
+    | PrefixedColumn (Identifier.Identifier prefix, col) ->
+        match col with
+        | NormalColumn.Identifier (Identifier.Identifier i) -> $"{prefix}.{i}"
+        | NormalColumn.SBracketColumn s -> $"{prefix}.{s}"
 
 type ResultBuilder() =
     member this.Bind(m, f) = Result.bind f m

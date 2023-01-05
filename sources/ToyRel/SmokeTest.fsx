@@ -196,6 +196,11 @@ testJoinExpression "join (Employee) (Dept) (not (Employee.DeptName=\"Finance\"))
 |> rowCount
 |> should 9
 
+testJoinExpression "join (Employee) (Dept) (Employee.[DeptName]=\"Finance\")"
+|> shouldOk
+|> rowCount
+|> should 6
+
 testJoinExpression "join (Employee) (Dept) (Hoge.DeptName=\"Finance\")"
 |> shouldError
 

@@ -18,10 +18,13 @@ let pSBracketColumn =
     pstring "[" >>. many1Satisfy notSBrackets .>> pstring "]"
     |>> SBracketColumn
 
-let pColumn =
-    attempt((pIdentifier .>> pchar '.') .>>. pIdentifier) |>> PrefixedColumn
-    <|> (pIdentifier |>> Column.Identifier)
+let pNormalColumn =
+    (pIdentifier |>> NormalColumn.Identifier)
     <|> pSBracketColumn
+
+let pColumn =
+    attempt((pIdentifier .>> pchar '.') .>>. pNormalColumn) |>> PrefixedColumn
+    <|> (pNormalColumn |>> NormalColumn)
 
 let pComma = spaces >>. pstring "," .>> spaces
 let pColumnList = sepBy1 pColumn pComma
