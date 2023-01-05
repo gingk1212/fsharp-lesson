@@ -64,10 +64,7 @@ and replaceBinOperand expNameL expNameR (expKeysL: Set<string>) (expKeysR: Set<s
     | Column col ->
         match col with
         | PrefixedColumn ((Identifier.Identifier prefix), normalCol) ->
-            let colName =
-                match normalCol with
-                | NormalColumn.Identifier (Identifier.Identifier i) -> i
-                | NormalColumn.SBracketColumn s -> s
+            let colName = getNameFromNormalColumn normalCol
 
             if (prefix = expNameL && expKeysL.Contains(colName)) ||
                (prefix = expNameR && not (expKeysL.Contains(colName)) && expKeysR.Contains(colName))
