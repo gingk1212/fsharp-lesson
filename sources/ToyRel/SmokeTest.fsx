@@ -233,6 +233,15 @@ testUnionExpression "(project (Employee) Name, DeptName) union (project (rename 
 
 
 //
+// IntersectExpression test
+//
+testIntersectExpression "(project (Employee) Name, DeptName) intersect (project (rename (Dept.Manager) Name) Name, DeptName)"
+|> shouldOk
+|> rowCount
+|> should 2
+
+
+//
 // PrintStmt test
 //
 match parseCommand "print Employee" with

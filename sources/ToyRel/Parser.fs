@@ -85,13 +85,14 @@ let pExprInExpr =
 
 let pInfixExpression =
     pipe3 (pExprInExpr .>> spaces)
-          (pstring "difference" <|> pstring "product" <|> pstring "union")
+          (pstring "difference" <|> pstring "product" <|> pstring "union" <|> pstring "intersect")
           (spaces >>. pExprInExpr)
           (fun l cmd r ->
                match cmd with
                | "difference" -> DifferenceExpression (l, r)
                | "product" -> ProductExpression (l, r)
                | "union" -> UnionExpression (l, r)
+               | "intersect" -> IntersectExpression (l, r)
                | _ -> failwith "not reachable")
 
 let pProjectExpression =

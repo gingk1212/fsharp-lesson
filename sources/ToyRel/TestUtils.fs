@@ -4,6 +4,7 @@ open System
 open FParsec
 open Common
 open Relation
+open RelationOp
 open Eval
 open Parser
 
@@ -64,7 +65,7 @@ let testDifferenceExpression cmd =
     | InfixExpression i ->
         match i with
         | DifferenceExpression (relL, relR) ->
-            evalDifferenceExpression relL relR
+            evalInfixExpression differenceOp relL relR
         | _ ->
             raiseToyRelException "Parsing result should be 'DifferenceExpression'"
     | _ ->
@@ -107,11 +108,22 @@ let testUnionExpression cmd =
     | InfixExpression i ->
         match i with
         | UnionExpression (relL, relR) ->
-            evalUnionExpression relL relR
+            evalInfixExpression unionOp relL relR
         | _ ->
             raiseToyRelException "Parsing result should be 'UnionExpression'"
     | _ ->
         raiseToyRelException "Parsing result should be 'UnionExpression'"
+
+let testIntersectExpression cmd =
+    match parseCommand cmd with
+    | InfixExpression i ->
+        match i with
+        | IntersectExpression (relL, relR) ->
+            evalInfixExpression intersectOp relL relR
+        | _ ->
+            raiseToyRelException "Parsing result should be 'IntersectExpression'"
+    | _ ->
+        raiseToyRelException "Parsing result should be 'IntersectExpression'"
 
 let testAssignStmt cmd =
     match parseCommand cmd with

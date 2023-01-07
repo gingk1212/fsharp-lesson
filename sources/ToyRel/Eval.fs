@@ -15,25 +15,26 @@ let rec evalExpression expression =
     | Expression.RenameExpression rename -> evalRenameExpression rename
     | Expression.InfixExpression infix ->
         match infix with
-        | DifferenceExpression (expL, expR) -> evalDifferenceExpression expL expR
+        | DifferenceExpression (expL, expR) -> evalInfixExpression differenceOp expL expR
         | ProductExpression (expL, expR) -> evalProductExpression expL expR
-        | UnionExpression (expL, expR) -> evalUnionExpression expL expR
+        | UnionExpression (expL, expR) -> evalInfixExpression unionOp expL expR
+        | IntersectExpression (expL, expR) -> evalInfixExpression intersectOp expL expR
 
 and evalProjectExpression projExp =
     evalExpression projExp.Expression
     |> Result.bind (projectOp projExp.ColumnList)
 
-and evalDifferenceExpression expL expR =
-    let diff rel1 rel2 =
+and evalInfixExpression op expL expR =
+    let doOp rel1 rel2 =
         if isUnionCompatible rel1 rel2 then
-            differenceOp rel1 rel2
+            op rel1 rel2
         else
             Result.Error "Relations are not union compatible."
 
     result {
         let! relL = evalExpression expL
         let! relR = evalExpression expR
-        let! rel = diff relL relR
+        let! rel = doOp relL relR
         return rel
     }
 
@@ -159,20 +160,6 @@ and evalRenameExpression renameExp =
     let newName = getNameFromNormalColumn renameExp.NewName
     evalExpression renameExp.Expression
     |> Result.map (mapColKeys (fun key -> if key = oldName then newName else key))
-
-and evalUnionExpression expL expR =
-    let union rel1 rel2 =
-        if isUnionCompatible rel1 rel2 then
-            unionOp rel1 rel2
-        else
-            Result.Error "Relations are not union compatible."
-
-    result {
-        let! relL = evalExpression expL
-        let! relR = evalExpression expR
-        let! rel = union relL relR
-        return rel
-    }
 
 
 // Statement evaluator

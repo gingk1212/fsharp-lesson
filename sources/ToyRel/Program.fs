@@ -3,6 +3,7 @@ open FParsec
 open ReCJKLine
 open Common
 open Relation
+open RelationOp
 open Eval
 open Parser
 
@@ -50,7 +51,7 @@ let execute command =
         | InfixExpression infixExp ->
             match infixExp with
             | DifferenceExpression (relL, relR) ->
-                evalDifferenceExpression relL relR
+                evalInfixExpression differenceOp relL relR
                 |> Result.bind saveWithRandomName
                 |> checkRelationResult
             | ProductExpression (relL, relR) ->
@@ -58,7 +59,11 @@ let execute command =
                 |> Result.bind saveWithRandomName
                 |> checkRelationResult
             | UnionExpression (relL, relR) ->
-                evalUnionExpression relL relR
+                evalInfixExpression unionOp relL relR
+                |> Result.bind saveWithRandomName
+                |> checkRelationResult
+            | IntersectExpression (relL, relR) ->
+                evalInfixExpression intersectOp relL relR
                 |> Result.bind saveWithRandomName
                 |> checkRelationResult
         | ListStmt ->

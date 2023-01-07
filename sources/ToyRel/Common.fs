@@ -58,6 +58,7 @@ and InfixExpression =
     | DifferenceExpression of Expression * Expression
     | ProductExpression of Expression * Expression
     | UnionExpression of Expression * Expression
+    | IntersectExpression of Expression * Expression
 
 and ProjectExpression =
     { Expression: Expression

@@ -48,6 +48,14 @@ let differenceOp rel1 rel2 =
         | err -> Result.Error err.Message
 
 
+let intersectOp rel1 rel2 =
+    try
+        let rel2Set = rowsHashSet rel2
+        filter (fun row -> rel2Set.Contains(row)) rel1
+    with
+        | err -> Result.Error err.Message
+
+
 let productOp relL relR prefix =
     let setL = columnKeys relL |> set
 
