@@ -102,6 +102,17 @@ let testRenameExpression cmd =
     | _ -> 
         raiseToyRelException "Parsing result should be 'RenameExpression'"
 
+let testUnionExpression cmd =
+    match parseCommand cmd with
+    | InfixExpression i ->
+        match i with
+        | UnionExpression (relL, relR) ->
+            evalUnionExpression relL relR
+        | _ ->
+            raiseToyRelException "Parsing result should be 'UnionExpression'"
+    | _ ->
+        raiseToyRelException "Parsing result should be 'UnionExpression'"
+
 let testAssignStmt cmd =
     match parseCommand cmd with
     | AssignStmt a ->

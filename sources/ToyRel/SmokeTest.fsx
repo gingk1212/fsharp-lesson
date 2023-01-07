@@ -224,6 +224,15 @@ testRenameExpression "rename (Nothing.[EmpId]) Id"
 
 
 //
+// UnionExpression test
+//
+testUnionExpression "(project (Employee) Name, DeptName) union (project (rename (Dept.Manager) Name) Name, DeptName)"
+|> shouldOk
+|> rowCount
+|> should 6
+
+
+//
 // PrintStmt test
 //
 match parseCommand "print Employee" with

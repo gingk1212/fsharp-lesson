@@ -17,6 +17,7 @@ let rec evalExpression expression =
         match infix with
         | DifferenceExpression (expL, expR) -> evalDifferenceExpression expL expR
         | ProductExpression (expL, expR) -> evalProductExpression expL expR
+        | UnionExpression (expL, expR) -> evalUnionExpression expL expR
 
 and evalProjectExpression projExp =
     evalExpression projExp.Expression
@@ -158,6 +159,20 @@ and evalRenameExpression renameExp =
     let newName = getNameFromNormalColumn renameExp.NewName
     evalExpression renameExp.Expression
     |> Result.map (mapColKeys (fun key -> if key = oldName then newName else key))
+
+and evalUnionExpression expL expR =
+    let union rel1 rel2 =
+        if isUnionCompatible rel1 rel2 then
+            unionOp rel1 rel2
+        else
+            Result.Error "Relations are not union compatible."
+
+    result {
+        let! relL = evalExpression expL
+        let! relR = evalExpression expR
+        let! rel = union relL relR
+        return rel
+    }
 
 
 // Statement evaluator

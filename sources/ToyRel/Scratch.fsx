@@ -26,28 +26,86 @@ open TestUtils
 
 
 //
-// rename (シラバス.専門) 科目
+// (project (Employee) Name, DeptName) union (project (rename (Dept.Manager) Name) Name, DeptName)
 //
 
-// let testCmd = parseCommand "rename (シラバス.専門) 科目"
-let testCmd = parseCommand "rename (シラバス.[専門]) 科目"
+changeDB (Identifier.Identifier "wikipedia")
 
-let renameExp =
-    match testCmd with
-    | RenameExpression rename -> rename
+let rel1 = testProjectExpression "project (Employee) Name, DeptName" |> shouldOk
+let rel2 = testProjectExpression "project (rename (Dept.Manager) Name) Name, DeptName" |> shouldOk
+
+
+let rel2set = rowsHashSet rel2
+let newRel1 = rel1 |> filter (fun row -> not (rel2set.Contains(row))) |> shouldOk
+
+
+let (Relation df1) = newRel1
+let (Relation df2) = rel2
+
+(df1.RowsDense.Values |> Seq.toList) @ (df2.RowsDense.Values |> Seq.toList)
+|> List.toSeq
+|> Series.ofValues
+|> Frame.ofRows
+|> fromFrame
+
+
+
+
+// implement
+
+let union (Relation df1) (Relation df2) =
+    try
+        (df1.RowsDense.Values |> Seq.toList) @ (df2.RowsDense.Values |> Seq.toList)
+        |> List.toSeq
+        |> Series.ofValues
+        |> Frame.ofRows
+        |> fromFrame
+        |> Result.Ok
+    with
+        | err -> Result.Error err.Message
+
+
+let unionOp rel1 rel2 =
+    let rel1set = rowsHashSet rel1
+
+    rel2
+    |> filter (fun row -> not (rel1set.Contains(row)))
+    |> Result.bind (union rel1)
+
+
+let evalUnionExpression expL expR =
+    let union rel1 rel2 =
+        if isUnionCompatible rel1 rel2 then
+            unionOp rel1 rel2
+        else
+            Result.Error "Relations are not union compatible."
+
+    result {
+        let! relL = evalExpression expL
+        let! relR = evalExpression expR
+        let! rel = union relL relR
+        return rel
+    }
+
+
+// let expL =
+//     match parseCommand "project (Employee) Name, DeptName" with
+//     | ProjectExpression p -> p |> Expression.ProjectExpression
+//     | _  -> failwith "error"
+// let expR =
+//     match parseCommand "project (rename (Dept.Manager) Name) Name, DeptName" with
+//     | ProjectExpression p -> p |> Expression.ProjectExpression
+//     | _  -> failwith "error"
+
+let (expL, expR) =
+    match parseCommand "(project (Employee) Name, DeptName) union (project (rename (Dept.Manager) Name) Name, DeptName)" with
+    | InfixExpression i ->
+        match i with
+        | UnionExpression (e1, e2) -> (e1, e2)
+        | _ -> failwith "error"
     | _ -> failwith "error"
 
-
-// let exp = Identifier(Identifier.Identifier("シラバス"))
-// // let oldName = NormalColumn.Identifier(Identifier.Identifier("専門"))
-// // let newName = NormalColumn.Identifier(Identifier.Identifier("科目"))
-// let oldName = SBracketColumn("専門")
-// let newName = SBracketColumn("科目")
-// let renameExp = { Expression = exp; OldName = oldName; NewName = newName }
-
-
-evalRenameExpression renameExp
-
+evalUnionExpression expL expR
 
 
 

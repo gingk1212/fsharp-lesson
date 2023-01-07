@@ -57,6 +57,10 @@ let execute command =
                 evalProductExpression relL relR
                 |> Result.bind saveWithRandomName
                 |> checkRelationResult
+            | UnionExpression (relL, relR) ->
+                evalUnionExpression relL relR
+                |> Result.bind saveWithRandomName
+                |> checkRelationResult
         | ListStmt ->
             evalListStmt ()
             |> checkUnitResult

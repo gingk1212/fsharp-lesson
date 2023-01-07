@@ -60,6 +60,14 @@ let productOp relL relR prefix =
     |> product relL
 
 
+let unionOp rel1 rel2 =
+    let rel1set = rowsHashSet rel1
+
+    rel2
+    |> filter (fun row -> not (rel1set.Contains(row)))
+    |> Result.bind (join rel1)
+
+
 let isThetaComparable binOperandL binOperandR rel =
     let check l r =
         match l, r with

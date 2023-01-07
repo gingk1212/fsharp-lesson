@@ -84,11 +84,15 @@ let pExprInExpr =
     pstring "(" >>. (pExpression <|> (pIdentifier |>> Expression.Identifier)) .>> pstring ")"
 
 let pInfixExpression =
-    pipe3 pExprInExpr (spaces >>. (pstring "difference" <|> pstring "product") .>> spaces) pExprInExpr
+    pipe3 (pExprInExpr .>> spaces)
+          (pstring "difference" <|> pstring "product" <|> pstring "union")
+          (spaces >>. pExprInExpr)
           (fun l cmd r ->
                match cmd with
                | "difference" -> DifferenceExpression (l, r)
-               | "product" | _ -> ProductExpression (l, r))
+               | "product" -> ProductExpression (l, r)
+               | "union" -> UnionExpression (l, r)
+               | _ -> failwith "not reachable")
 
 let pProjectExpression =
     pipe2 (pstring "project" >>. spaces >>. pExprInExpr .>> spaces) pColumnList

@@ -73,3 +73,14 @@ let product (Relation df1) (Relation df2) =
         |> Result.Ok
     with
         | err -> Result.Error err.Message
+
+let join (Relation df1) (Relation df2) =
+    try
+        (df1.RowsDense.Values |> Seq.toList) @ (df2.RowsDense.Values |> Seq.toList)
+        |> List.toSeq
+        |> Series.ofValues
+        |> Frame.ofRows
+        |> fromFrame
+        |> Result.Ok
+    with
+        | err -> Result.Error err.Message
