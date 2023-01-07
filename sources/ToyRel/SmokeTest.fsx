@@ -213,13 +213,11 @@ testJoinExpression "join (Employee) (Dept) (Employee.Hoge=\"Finance\")"
 //
 testRenameExpression "rename (Employee.EmpId) Id"
 |> shouldOk
-|> rowCount
-|> should 5
+|> shouldContain "Id"
 
 testRenameExpression "rename (Employee.[EmpId]) Id"
 |> shouldOk
-|> rowCount
-|> should 5
+|> shouldContain "Id"
 
 testRenameExpression "rename (Nothing.[EmpId]) Id"
 |> shouldError

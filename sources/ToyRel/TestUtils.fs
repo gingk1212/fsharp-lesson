@@ -30,6 +30,14 @@ let shouldError result =
     | Result.Error _ ->
         ()
 
+let shouldContain key rel =
+    let keys = rel |> columnKeys |> set
+    if keys.Contains(key) then
+        ()
+    else
+        raiseToyRelException (sprintf "The relation should contain \"%s\"" key)
+
+
 let parseCommand str =
     match run pCommand str with
     | Success(result, _, _) ->
