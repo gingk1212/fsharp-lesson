@@ -74,7 +74,7 @@ let product (Relation df1) (Relation df2) =
     with
         | err -> Result.Error err.Message
 
-let join (Relation df1) (Relation df2) =
+let concat (Relation df1) (Relation df2) =
     try
         (df1.RowsDense.Values |> Seq.toList) @ (df2.RowsDense.Values |> Seq.toList)
         |> List.toSeq

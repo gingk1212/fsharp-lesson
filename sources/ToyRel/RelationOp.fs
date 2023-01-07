@@ -73,7 +73,7 @@ let unionOp rel1 rel2 =
 
     rel2
     |> filter (fun row -> not (rel1set.Contains(row)))
-    |> Result.bind (join rel1)
+    |> Result.bind (concat rel1)
 
 
 let isThetaComparable binOperandL binOperandR rel =
