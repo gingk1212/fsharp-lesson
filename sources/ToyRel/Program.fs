@@ -10,23 +10,11 @@ open Parser
 let saveWithRandomName relation =
     let identifier = createBaseName ()
     save identifier relation
-    |> Result.map (fun () ->
-        let (Identifier.Identifier rname) = identifier
-        rname)
+    |> Result.map (fun _ -> identifier)
 
-let checkUnitResult result =
-    match result with
-    | Result.Ok _ ->
-        ()
-    | Result.Error err ->
-        printfn "[Failure] %s" err
-
-let checkRelationResult result =
-    match result with
-    | Result.Ok rname ->
-        printfn "Relation %s returned." rname
-    | Result.Error err ->
-        printfn "[Failure] %s" err
+type ResultType =
+    | Rname of Identifier
+    | Unit of unit
 
 let execute command =
     match run pCommand command with
@@ -35,57 +23,54 @@ let execute command =
         | ProjectExpression projExp ->
             evalProjectExpression projExp
             |> Result.bind saveWithRandomName
-            |> checkRelationResult
+            |> Result.map Rname
         | RestrictExpression restrictExp ->
             evalRestrictExpression restrictExp
             |> Result.bind saveWithRandomName
-            |> checkRelationResult
+            |> Result.map Rname
         | JoinExpression joinExp ->
             evalJoinExpression joinExp
             |> Result.bind saveWithRandomName
-            |> checkRelationResult
+            |> Result.map Rname
         | RenameExpression renameExp ->
             evalRenameExpression renameExp
             |> Result.bind saveWithRandomName
-            |> checkRelationResult
+            |> Result.map Rname
         | InfixExpression infixExp ->
             match infixExp with
             | DifferenceExpression (relL, relR) ->
                 evalInfixExpression differenceOp relL relR
                 |> Result.bind saveWithRandomName
-                |> checkRelationResult
+                |> Result.map Rname
             | ProductExpression (relL, relR) ->
                 evalProductExpression relL relR
                 |> Result.bind saveWithRandomName
-                |> checkRelationResult
+                |> Result.map Rname
             | UnionExpression (relL, relR) ->
                 evalInfixExpression unionOp relL relR
                 |> Result.bind saveWithRandomName
-                |> checkRelationResult
+                |> Result.map Rname
             | IntersectExpression (relL, relR) ->
                 evalInfixExpression intersectOp relL relR
                 |> Result.bind saveWithRandomName
-                |> checkRelationResult
+                |> Result.map Rname
         | ListStmt ->
             evalListStmt ()
-            |> checkUnitResult
+            |> Result.map Unit
         | QuitStmt ->
             Environment.Exit 0
+            Result.Ok (Unit ())
         | PrintStmt rname ->
             evalPrintStmt rname
-            |> checkUnitResult
+            |> Result.map Unit
         | UseStmt dbname ->
             evalUseStmt dbname
-            |> checkUnitResult
+            |> Result.map Unit
         | AssignStmt assignStmt ->
-            match evalAssignStmt assignStmt with
-            | Result.Ok _ ->
-                let (Identifier.Identifier rname) = assignStmt.Rname
-                printfn "Relation %s returned." rname
-            | Result.Error err ->
-                printfn "[Failure] %s" err
+            evalAssignStmt assignStmt
+            |> Result.map (fun _ -> Rname (assignStmt.Rname))
     | Failure(errorMsg, _, _) ->
-        printfn "[Failure] %s" errorMsg
+        Result.Error errorMsg
 
 [<EntryPoint>]
 let main _ =
@@ -93,7 +78,14 @@ let main _ =
 
     let rec repl () =
         let command = recjk.ReadLine("> ")
-        execute command
+        match execute command with
+        | Result.Ok ok ->
+            match ok with
+            | Rname (Identifier.Identifier rname) -> printfn "Relation %s returned." rname
+            | Unit _ -> ()
+        | Result.Error err ->
+            printfn "[Failure] %s" err
+
         repl ()
 
     repl ()
