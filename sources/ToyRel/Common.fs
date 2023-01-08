@@ -130,3 +130,9 @@ type ResultBuilder() =
     member this.Return(x) = Result.Ok x
 
 let result = new ResultBuilder()
+
+let mutable lastRname = Identifier.Identifier ""
+
+let lastRnameIsEmpty () =
+    let (Identifier.Identifier last) = lastRname
+    if last = "" then true else false

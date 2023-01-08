@@ -172,7 +172,12 @@ let evalListStmt () =
         | err -> Result.Error err.Message
 
 let evalPrintStmt rname =
-    loadRelation rname
+    let (Identifier.Identifier str) = rname
+    if str = "@last" then
+        if lastRnameIsEmpty () then Result.Error "There is no last relation."
+        else loadRelation lastRname
+    else
+        loadRelation rname
     |> Result.map print
 
 let evalUseStmt dbname =

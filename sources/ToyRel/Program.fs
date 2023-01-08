@@ -81,7 +81,10 @@ let main _ =
         match execute command with
         | Result.Ok ok ->
             match ok with
-            | Rname (Identifier.Identifier rname) -> printfn "Relation %s returned." rname
+            | Rname rname ->
+                lastRname <- rname
+                let (Identifier.Identifier str) = rname
+                printfn "Relation %s returned." str
             | Unit _ -> ()
         | Result.Error err ->
             printfn "[Failure] %s" err
