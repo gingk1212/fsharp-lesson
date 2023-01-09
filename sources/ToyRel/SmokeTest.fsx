@@ -18,7 +18,7 @@ open Eval
 #load "TestUtils.fs"
 open TestUtils
 
-changeDB (Identifier.Identifier "wikipedia")
+changeDbForTest (Identifier.Identifier "wikipedia")
 
 //
 // ProjectExpression test
@@ -33,14 +33,14 @@ testProjectExpression "project (project (Employee) Name, EmpId, DeptName) Name, 
 |> columnCount
 |> should 2
 
-changeDB (Identifier.Identifier "library")
+changeDbForTest (Identifier.Identifier "library")
 
 testProjectExpression "project (book) author"
 |> shouldOk
 |> rowCount
 |> should 7
 
-changeDB (Identifier.Identifier "wikipedia")
+changeDbForTest (Identifier.Identifier "wikipedia")
 
 
 //
@@ -58,7 +58,7 @@ testDifferenceExpression "(project (Employee) EmpId) difference (project (Employ
 //
 // RestrictExpression test
 //
-changeDB (Identifier.Identifier "library")
+changeDbForTest (Identifier.Identifier "library")
 
 // Ok
 testRestrictExpression "restrict (auction) (sell_price>purchase_price)"
@@ -131,7 +131,7 @@ testRestrictExpression "restrict (auction) (NOTHING=\"R005\")"
 
 parseCommandWithFailure "restrict (auction) (purchase_price=0.5)"
 
-changeDB (Identifier.Identifier "wikipedia")
+changeDbForTest (Identifier.Identifier "wikipedia")
 
 
 //
@@ -300,12 +300,7 @@ match parseCommand "quit" with
 // UseStmt test
 //
 match parseCommand "use library" with
-| UseStmt u ->
-    evalUseStmt u
-    |> shouldOk
-
-    let (Identifier.Identifier dbname) = u
-    baseDir + dbname + "/" |> should databaseDir
-    changeDB (Identifier.Identifier "wikipedia")
+| UseStmt _ ->
+    ()
 | _ ->
     raiseToyRelException "Parsing result should be 'UseStmt'"

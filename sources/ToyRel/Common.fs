@@ -94,8 +94,8 @@ type Command =
     | UseStmt of Identifier
     | AssignStmt of AssignStmt
 
-let baseDir = "database/"
-let mutable databaseDir = baseDir + "master/"
+let baseDir = Directory.GetCurrentDirectory () + "/"
+let mutable databaseDir = baseDir + "master/"   // default database is "master"
 
 let changeDB (Identifier.Identifier dbname) =
     let newdbDir = baseDir + dbname + "/"

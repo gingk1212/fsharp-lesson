@@ -132,3 +132,7 @@ let testAssignStmt cmd =
         loadRelation a.Rname
     | _ ->
         raiseToyRelException "Parsing result should be 'AssignStmt'"
+
+// Use "${CURRENT_DIRECTORY}/database/" for baseDir in test environment
+let changeDbForTest (Identifier.Identifier dbname) =
+    changeDB (Identifier.Identifier ("database/" + dbname))

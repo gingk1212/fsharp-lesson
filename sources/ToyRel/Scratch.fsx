@@ -29,7 +29,7 @@ open TestUtils
 // (project (Employee) Name, DeptName) union (project (rename (Dept.Manager) Name) Name, DeptName)
 //
 
-changeDB (Identifier.Identifier "wikipedia")
+changeDbForTest (Identifier.Identifier "wikipedia")
 
 let rel1 = testProjectExpression "project (Employee) Name, DeptName" |> shouldOk
 let rel2 = testProjectExpression "project (rename (Dept.Manager) Name) Name, DeptName" |> shouldOk
